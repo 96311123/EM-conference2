@@ -38,6 +38,14 @@ from em_conferences import (Conference, HEADERS, TIMEOUT, POLITE_DELAY,
 
 ASEM_URL = "https://www.asiansem.org/events-and-sponsorship"
 HKCEM_URL = "https://hkcem.org.hk/"
+
+# SSEM（Scientific Symposium on Emergency Medicine）是 HKCEM 的年度旗艦會議，
+# 每年十月底在香港醫學專科學院舉行，有獨立網域。
+#
+# 但 ssem.hk 的 robots.txt 禁止自動存取，所以這裡**只當連結用，不爬它**。
+# 改從 HKCEM 官網的 WordPress API 找 SSEM 公告貼文——同樣的資訊，
+# 而且是對方允許抓取的來源。
+SSEM_SITE = "https://www.ssem.hk/index"
 SEMS_URL = "https://sems-online.com/"
 IFEM_EVENTS_URL = "https://www.ifem.cc/events"
 
@@ -96,6 +104,7 @@ def _ord_suffix(n: int) -> str:
 # --------------------------------------------------------------------------
 
 CONF_WORDS = re.compile(
+    r"\bSSEM\b|scientific symposium|"
     r"annual scientific (meeting|congress|conference)|\bASM\b|"
     r"scientific meeting|annual meeting|conference|congress|symposium|"
     r"年會|學術研討會|周年.*(大會|會議)", re.I)
@@ -145,10 +154,16 @@ def parse_wp_conferences(posts: list[dict], society: str, fallback_url: str,
         start, end, raw = parse_date_range(blob, default_year=post_year)
         if not start:
             continue
+        is_ssem = re.search(r"\bSSEM\b|scientific symposium", blob, re.I)
         out.append(Conference(
-            society=society, name=title[:110],
+            society=society,
+            name=(f"Scientific Symposium on Emergency Medicine (SSEM {start[:4]})"
+                  if is_ssem and society == "HKCEM" else title[:110]),
             year=int(start[:4]), date_text=raw, start=start, end=end,
-            source_url=p.get("link") or fallback_url, note=note))
+            city="Hong Kong" if is_ssem and society == "HKCEM" else "",
+            source_url=SSEM_SITE if (is_ssem and society == "HKCEM")
+                       else (p.get("link") or fallback_url),
+            note=note))
     return dedupe_conferences(out)
 
 
@@ -198,16 +213,20 @@ def scrape_asia(session: requests.Session | None = None) -> list[Conference]:
 
     time.sleep(POLITE_DELAY)
 
-    # HKCEM（自架 WordPress）
+    # HKCEM（自架 WordPress）。年會公告可能發布於數月前、已掉出最近貼文，
+    # 所以額外用關鍵字查詢把它撈回來。
     posts = wp_posts(HKCEM_URL, s)
+    for kw in ("SSEM", "symposium"):
+        posts.extend(wp_posts(HKCEM_URL, s, per_page=10, search=kw))
     got = parse_wp_conferences(
         posts, "HKCEM", HKCEM_URL,
-        "取自 HKCEM 消息流，信心低——該站無固定年會頁面，請人工確認")
+        "取自 HKCEM 官網貼文；年會為 SSEM，詳情見 ssem.hk（該站禁止自動擷取）")
     if not got:
-        out.append(Conference(society="HKCEM", name="消息流中未偵測到年會",
-                              source_url=HKCEM_URL,
-                              note="HKCEM 無固定年會頁面；學術活動另見 hkcemevent.com "
-                                   "與 e-portfolio 的 Event Calendar"))
+        out.append(Conference(society="HKCEM",
+                              name="SSEM 下一屆日期尚未在 HKCEM 官網公布",
+                              city="Hong Kong", source_url=SSEM_SITE,
+                              note="HKCEM 年會為 SSEM，每年十月底；"
+                                   "詳情見 ssem.hk（該站禁止自動擷取，需人工查看）"))
     out.extend(got)
 
     out.sort(key=lambda c: (c.start or "9999", c.society))
