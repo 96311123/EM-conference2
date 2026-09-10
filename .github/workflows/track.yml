@@ -31,7 +31,7 @@ jobs:
           cache: pip
 
       - name: 安裝套件
-        run: pip install requests beautifulsoup4
+        run: pip install -r requirements.txt
 
       - name: 執行爬取與繪製
         id: track
