@@ -300,12 +300,18 @@ def parse_tsem_intl(text: str) -> list[Conference]:
             continue
         # 會議名稱在主辦單位全名之前。先只取最後一行（避免把前一筆的尾巴
         # 或頁面標題吃進來），再從主辦單位全名處切斷。
-        name = tail[:m.start()].strip().splitlines()[-1].strip()
-        cut = re.search(r"\s(American College|Society for|Hong Kong College|"
-                        r"International Federation|European Society|Asian Society|"
-                        r"Taiwan Society|Japanese Association|Korean Society)", name)
+        ORG = (r"(American College|Society for|Hong Kong College|"
+               r"International Federation|European Society|Asian Society|"
+               r"Taiwan Society|Japanese Association|Korean Society)")
+        lines = [x.strip() for x in tail[:m.start()].strip().splitlines() if x.strip()]
+        name = lines[-1] if lines else ""
+        cut = re.search(r"\s" + ORG, name)
         if cut:
             name = name[:cut.start()].strip()
+        # get_text 會把各欄位拆成不同行，這時最後一行是主辦單位全名而非會議名，
+        # 要再往前一行取。（用真實頁面文字測出來的情況，不是假設。）
+        if not name or re.match(r"^" + ORG, name):
+            name = lines[-2] if len(lines) >= 2 else name
         name = re.sub(r"\s{2,}", " ", name)[:110].strip()
         out.append(Conference(
             society=society, name=name or f"{society} {y}", year=y,
