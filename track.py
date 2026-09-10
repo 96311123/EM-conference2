@@ -30,6 +30,7 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data" / "conferences.json"
 DL_DATA = ROOT / "data" / "deadlines.json"
 ARCHIVE = ROOT / "data" / "archive.json"
+HEALTH = ROOT / "data" / "health.json"
 DOCS = ROOT / "docs"
 
 
@@ -95,6 +96,49 @@ def update_archive(archive: list[dict], current: list[dict],
     out = list(idx.values())
     out.sort(key=lambda r: (r.get("start") or "9999", r.get("society", "")))
     return out, added
+
+
+# ------------------------------------------------------------------
+# 告警分級
+# ------------------------------------------------------------------
+# 「任何一個學會抓不到就整次標紅」是個壞設計：IFEM 被 403 擋、EuSEM 在兩個
+# 會議週期之間沒有投稿頁、HKCEM 的 SSEM 每年年中才公告——這些都是已知且會
+# 持續的狀態。每週紅一次，兩個月後你就會自動略過通知，等於沒有告警。
+#
+# 改成看「是否退步」：記錄每個學會最後一次成功的日期，
+#   · 最近 90 天內成功過、現在卻失敗 → 真的壞了，標紅
+#   · 從沒成功過，或已經很久沒成功 → 已知問題，只提示不中斷
+REGRESSION_WINDOW = 90
+
+
+def load_health() -> dict:
+    if HEALTH.exists():
+        try:
+            return json.loads(HEALTH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def classify_failures(failed: list[str], health: dict, today: date
+                      ) -> tuple[list[str], list[str]]:
+    """把失敗的學會分成『退步』（要修）與『已知』（只提示）。"""
+    regressions, known = [], []
+    for society in failed:
+        last = health.get(society)
+        if not last:
+            known.append(f"{society}：從未成功抓取過")
+            continue
+        try:
+            age = (today - date.fromisoformat(last)).days
+        except ValueError:
+            known.append(f"{society}：健康紀錄異常（{last}）")
+            continue
+        if age <= REGRESSION_WINDOW:
+            regressions.append(f"{society}：{last} 還抓得到，現在失敗了（{age} 天前）")
+        else:
+            known.append(f"{society}：已連續 {age} 天抓不到，屬已知狀態")
+    return regressions, known
 
 
 def key(r: dict) -> str:
@@ -265,6 +309,16 @@ def main() -> int:
     DL_DATA.write_text(json.dumps(deadlines, ensure_ascii=False, indent=2),
                        encoding="utf-8")
 
+    # 更新健康紀錄：這次成功的學會蓋上今天的日期
+    health = load_health()
+    for society in ok_societies:
+        health[society] = date.today().isoformat()
+    HEALTH.write_text(json.dumps(health, ensure_ascii=False, indent=2, sort_keys=True),
+                      encoding="utf-8")
+
+    failed = [w.split("：")[0] for w in warnings]
+    regressions, known_issues = classify_failures(failed, health, date.today())
+
     archive, n_new = update_archive(load_archive(), merged, ok_societies, date.today())
     ARCHIVE.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -296,16 +350,26 @@ def main() -> int:
         emit("")
     else:
         emit("與上次相同，無變動。\n")
-    if warnings:
-        emit("### 需要注意\n")
-        for w in warnings:
+    if regressions:
+        emit("### 需要修：原本抓得到，現在失敗\n")
+        for w in regressions:
             emit(f"- {w}")
         emit("")
+    if known_issues:
+        emit("### 已知狀態（不影響其他學會）\n")
+        for w in known_issues:
+            emit(f"- {w}")
+        emit("")
+    if warnings:
+        emit("<details><summary>本次未取得資料的學會</summary>\n")
+        for w in warnings:
+            emit(f"- {w}")
+        emit("\n</details>\n")
 
     # 交棒給 workflow：是否有變動、是否有解析失敗
     set_output(urgent=str(bool(urgent)).lower(),
                changed=str(bool(changes or dl_changes)).lower(),
-               stale=str(bool(warnings)).lower(),
+               stale=str(bool(regressions)).lower(),
                count=len(merged))
     body = []
     if urgent:
