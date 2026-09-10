@@ -1,0 +1,69 @@
+name: 追蹤急診國際年會
+
+on:
+  schedule:
+    # 每週一台北時間早上 9 點（UTC 01:00）。
+    # 年會日期月更就夠，但死線月更太慢——剩兩週才發現就來不及了，
+    # 所以整條流程改成週更，以較短的那個需求為準。
+    - cron: "0 1 * * 1"
+  workflow_dispatch:        # 也可以在 Actions 頁面手動按一下就跑
+  push:
+    branches: [main]
+    paths: ["*.py"]         # 改了爬蟲程式就立刻重跑一次驗證
+
+permissions:
+  contents: write           # 需要把更新後的 docs/ commit 回來
+  issues: write             # 有變動時開 issue 通知
+
+concurrency:
+  group: conference-tracker
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 安裝套件
+        run: pip install requests beautifulsoup4
+
+      - name: 執行爬取與繪製
+        id: track
+        run: python track.py
+
+      - name: 提交更新
+        id: commit
+        run: |
+          git config user.name  "conference-tracker[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs
+          if git diff --staged --quiet; then
+            echo "沒有檔案變動，略過 commit"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "更新年會與死線資料（${{ steps.track.outputs.count }} 筆場次）"
+            git push
+            echo "committed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 有變動就開 issue 通知
+        if: steps.track.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "年會／死線有變動（$(date +%Y-%m-%d)）" \
+            --body-file CHANGES.md \
+            --label "conference-update" || true
+
+      - name: 解析失敗時讓這次執行標記為失敗
+        if: steps.track.outputs.stale == 'true'
+        run: |
+          echo "::error::有學會的頁面解析不出資料，很可能是官網改版，請檢查 parser。"
+          exit 1
