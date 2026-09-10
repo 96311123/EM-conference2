@@ -44,8 +44,16 @@ from em_conferences import (HEADERS, TIMEOUT, MONTHS, MONTH_RE, DASH,
 SAEM_DEADLINES_URL = ("https://www.saem.org/meetings-and-events/annual-meeting/"
                       "annual-meeting-navigation/education/submission-deadlines")
 ACEP_DEADLINES_URL = "https://www.acep.org/education/meetings/research"
+# EuSEM 的投稿頁網址每年會換（submit-your-abstracts / abstract-submission
+# / call-for-abstracts 都出現過）。依序試，第一個成功的就用。
 EUSEM_DEADLINES_URL = "https://eusemcongress.org/submit-your-abstracts/"
 EUSEM_LATE_URL = "https://eusemcongress.org/abstract-submission/"
+EUSEM_CANDIDATES = [
+    EUSEM_DEADLINES_URL,
+    EUSEM_LATE_URL,
+    "https://eusemcongress.org/call-for-abstracts/",
+    "https://eusemcongress.org/",
+]
 IFEM_HUB_URL = "https://www.ifem.cc/about_congress"
 
 
@@ -309,21 +317,32 @@ def collect_deadlines(today: date | None = None) -> list[Deadline]:
 
     jobs = [
         ("SAEM", SAEM_DEADLINES_URL, parse_saem_deadlines),
-        ("EUSEM", EUSEM_DEADLINES_URL, parse_eusem_deadlines),
         ("ACEP", ACEP_DEADLINES_URL, parse_acep_deadlines),
     ]
     for society, url, parser in jobs:
         try:
             out.extend(parser(fetch_text(url, session)))
         except Exception as exc:
-            out.append(Deadline(society=society, status="tba", source_url=url,
+            out.append(Deadline(society=society, track="Abstracts", status="tba",
+                                source_url=url,
                                 note=f"擷取失敗：{type(exc).__name__}: {exc}"))
 
-    # EuSEM 的 late-breaking 在另一頁
-    try:
-        out.extend(parse_eusem_deadlines(fetch_text(EUSEM_LATE_URL, session), EUSEM_LATE_URL))
-    except Exception:
-        pass
+    # EuSEM：依序試各個候選網址，抓到有日期的就停
+    eusem_hit = False
+    for url in EUSEM_CANDIDATES:
+        try:
+            got = parse_eusem_deadlines(fetch_text(url, session), url)
+        except Exception:
+            continue
+        if got:
+            out.extend(got)
+            if any(g.date_iso for g in got):
+                eusem_hit = True
+                break
+    if not eusem_hit and not any(d.society == "EUSEM" for d in out):
+        out.append(Deadline(society="EUSEM", track="Abstracts", status="tba",
+                            confidence="high", source_url=EUSEM_DEADLINES_URL,
+                            note="下一屆投稿尚未開放；往例約在會期前 7 個月公布"))
 
     # IFEM：先找出當期 congress 網站再掃
     site = discover_ifem_congress_site(session)
