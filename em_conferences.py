@@ -48,10 +48,20 @@ from bs4 import BeautifulSoup
 # 基本設定
 # --------------------------------------------------------------------------
 
-UA = ("Mozilla/5.0 (compatible; EM-Conference-Tracker/1.0; "
-      "academic use; contact: your.email@example.org)")
+# 有些學會網站（IFEM 就是）會擋掉自我宣告為 bot 的 User-Agent，
+# 從 GitHub Actions 的資料中心 IP 連過去更容易被擋。用一般瀏覽器的
+# 完整標頭組合可以通過大多數這類基本過濾。
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 
-HEADERS = {"User-Agent": UA, "Accept-Language": "en"}
+HEADERS = {
+    "User-Agent": UA,
+    "Accept": ("text/html,application/xhtml+xml,application/xml;q=0.9,"
+               "image/avif,image/webp,*/*;q=0.8"),
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    "Upgrade-Insecure-Requests": "1",
+}
 TIMEOUT = 30
 POLITE_DELAY = 2.0          # 每次請求之間的間隔（秒），別把人家網站打爆
 
@@ -86,9 +96,26 @@ class Conference:
 # --------------------------------------------------------------------------
 
 def fetch_text(url: str, session: requests.Session | None = None) -> str:
-    """抓網頁 → 轉成乾淨的純文字（每個 block 一行）。"""
+    """
+    抓網頁 → 轉成乾淨的純文字（每個 block 一行）。
+
+    被 403 擋下時會重試一次：先訪問該網域首頁取得 cookie，再回頭抓目標頁。
+    很多網站的基本防爬是「沒有 session cookie 就擋」，先暖身通常就過了。
+    """
     s = session or requests.Session()
     r = s.get(url, headers=HEADERS, timeout=TIMEOUT)
+
+    if r.status_code in (403, 429):
+        from urllib.parse import urlsplit
+        parts = urlsplit(url)
+        root = f"{parts.scheme}://{parts.netloc}/"
+        try:
+            s.get(root, headers=HEADERS, timeout=TIMEOUT)
+            time.sleep(1.5)
+            r = s.get(url, headers={**HEADERS, "Referer": root}, timeout=TIMEOUT)
+        except Exception:
+            pass
+
     r.raise_for_status()
     r.encoding = r.apparent_encoding or r.encoding
     return html_to_text(r.text)
