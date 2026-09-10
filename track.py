@@ -31,6 +31,7 @@ DATA = ROOT / "data" / "conferences.json"
 DL_DATA = ROOT / "data" / "deadlines.json"
 ARCHIVE = ROOT / "data" / "archive.json"
 HEALTH = ROOT / "data" / "health.json"
+MANUAL = ROOT / "data" / "manual.json"
 DOCS = ROOT / "docs"
 
 
@@ -139,6 +140,30 @@ def classify_failures(failed: list[str], health: dict, today: date
         else:
             known.append(f"{society}：已連續 {age} 天抓不到，屬已知狀態")
     return regressions, known
+
+
+def apply_manual(rows: list[dict]) -> tuple[list[dict], list[str]]:
+    """
+    人工指定的場次，優先於任何爬到的結果。
+
+    存在的理由很實際：有些資訊爬蟲拿不到，也不該硬爬。ACEP 的 Future Dates
+    頁不含當屆；SSEM 的官網禁止自動擷取。與其寫愈來愈脆弱的 parser 去猜，
+    不如把已經人工查證過的日期直接寫進 data/manual.json——它不會因為對方
+    改版而消失，也不需要等 parser 修好。
+
+    同一個 (學會, 年份) 若爬蟲也抓到了，以人工這筆為準。
+    """
+    if not MANUAL.exists():
+        return rows, []
+    try:
+        manual = json.loads(MANUAL.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return rows, [f"manual.json 格式錯誤，已略過：{exc}"]
+
+    keys = {(m.get("society"), m.get("year")) for m in manual}
+    kept = [r for r in rows if (r.get("society"), r.get("year")) not in keys]
+    notes = [f'{m.get("society")} {m.get("year")}：使用人工指定的資料' for m in manual]
+    return kept + manual, notes
 
 
 def drop_placeholders(rows: list[dict]) -> tuple[list[dict], list[str]]:
@@ -269,26 +294,37 @@ def urgent_list(deadlines: list[dict], today: date, within: int = 30) -> list[st
 
 
 def diff(new: list[dict], old: list[dict]) -> list[str]:
-    """只比對真正重要的欄位：日期與地點。"""
+    """
+    只比對真正重要的欄位：日期與地點。
+
+    已結束的場次不論新增或移除都不通知——歷史資料被補進來、或開完的會
+    從官網下架，都是常態而非需要你知道的事，那些已經存進 archive.json。
+    """
     fields = ("start", "end", "date_text", "city", "country_or_state", "venue")
+    today = date.today()
     o = {key(r): r for r in old}
     n = {key(r): r for r in new}
     changes = []
 
     for k in sorted(n.keys() - o.keys()):
         r = n[k]
+        if is_past(r, today):
+            continue
         changes.append(f"新增　{r['society']} {r.get('year')}："
                        f"{r.get('start') or r.get('date_text') or '日期未定'}"
                        f" @ {r.get('city') or '地點未定'}")
+
     for k in sorted(o.keys() - n.keys()):
         if is_past(o[k], today):
-            continue          # 開完的會從官網下架是常態，已存進 archive.json
+            continue
         changes.append(f"移除　{k.replace('|', ' ')}（官網已不再列出）")
+
     for k in sorted(n.keys() & o.keys()):
         for f in fields:
             a, b = (o[k].get(f) or ""), (n[k].get(f) or "")
             if a != b:
-                changes.append(f"異動　{k.replace('|', ' ')} {f}：{a or '(空)'} → {b or '(空)'}")
+                changes.append(f"異動　{k.replace('|', ' ')} {f}："
+                               f"{a or '(空)'} → {b or '(空)'}")
     return changes
 
 
@@ -335,8 +371,11 @@ def main() -> int:
 
     if args.offline:
         merged = json.loads(Path(args.offline).read_text(encoding="utf-8"))
+        merged, gap_notes = apply_manual(merged)
+        merged, dropped = drop_placeholders(merged)
+        gap_notes.extend(dropped)
         deadlines, warnings, changes, dl_changes = old_dl, [], [], []
-        ok_societies, gap_notes = set(), []
+        ok_societies = set()
     else:
         fresh = [asdict(c) for c in scrape()] + [asdict(c) for c in scrape_asia()]
         # 補漏來源依可靠度排序：ACEP 官方當屆頁給完整區間，優先於
@@ -344,6 +383,8 @@ def main() -> int:
         supplement = ([asdict(c) for c in scrape_acep_current()]
                       + [asdict(c) for c in scrape_tsem()])
         fresh, gap_notes = fill_gaps(fresh, supplement)
+        fresh, manual_notes = apply_manual(fresh)
+        gap_notes.extend(manual_notes)
         fresh, dropped = drop_placeholders(fresh)
         gap_notes.extend(dropped)
         ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
