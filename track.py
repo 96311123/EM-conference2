@@ -18,7 +18,7 @@ import json
 import os
 import sys
 from dataclasses import asdict
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from em_conferences import scrape, SCRAPERS
@@ -30,6 +30,18 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data" / "conferences.json"
 DL_DATA = ROOT / "data" / "deadlines.json"
 DOCS = ROOT / "docs"
+
+
+# ASEM 的 events 頁把 1998 年以來的每一屆都列出來，SEMS 的貼文也會翻出
+# 好幾年前的 ASM。這些對「接下來要投哪個會」毫無幫助，反而會把儀表板和
+# 變動通知淹掉。只保留最近一年內結束的與尚未發生的。
+KEEP_PAST_DAYS = 365
+
+
+def drop_old(rows: list[dict], today: date) -> tuple[list[dict], int]:
+    cutoff = (today - timedelta(days=KEEP_PAST_DAYS)).isoformat()
+    kept = [r for r in rows if not r.get("end") or r["end"] >= cutoff]
+    return kept, len(rows) - len(kept)
 
 
 def key(r: dict) -> str:
@@ -186,6 +198,7 @@ def main() -> int:
         deadlines, warnings, changes, dl_changes = old_dl, [], [], []
     else:
         fresh = [asdict(c) for c in scrape()] + [asdict(c) for c in scrape_asia()]
+        fresh, dropped = drop_old(fresh, date.today())
         merged, warnings = merge_with_previous(fresh, old)
         changes = diff(merged, old)
         deadlines = [asdict(d) for d in collect_deadlines()]
