@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+deadlines.py — 追蹤四大學會的摘要投稿死線。
+
+為什麼死線需要跟年會日期不同的做法
+==================================
+年會日期是「宣布一次、五年不變」；死線恰恰相反：
+
+1. **只在當期存在。** ACEP27 的投稿頁面要到 2027 年 3 月才會出現，
+   在那之前不是「抓不到」而是「還沒有」。程式必須把「尚未公布」當成
+   一個正常狀態，而不是錯誤。
+2. **一個學會有很多軌。** 光 SAEM27 就有 Workshops、Didactics、
+   Innovations、IGNITE!、Abstracts、Clinical Images 六個不同死線，
+   時間橫跨四個月。只抓「abstract deadline」會漏掉一半。
+3. **會被延期。** 「deadline extended」是常態，所以偵測到日期往後移
+   要當成正常事件通知，不是錯誤。
+4. **月更太慢。** 死線剩兩週時才發現就來不及了，所以排程改成每週。
+
+信心等級
+========
+不是每個學會的頁面都同樣結構化，程式誠實標記：
+
+  high   — 頁面有明確的「Submissions Close: 日期」欄位（SAEM）
+  medium — 從敘述句抽取，句型穩定（EuSEM）
+  low    — 從自由文字猜的，務必人工確認（ACEP、IFEM）
+
+low 的項目在儀表板上會標記，也不會寫進行事曆提醒。
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from datetime import date
+
+import requests
+
+from em_conferences import (HEADERS, TIMEOUT, MONTHS, MONTH_RE, DASH,
+                            fetch_text, html_to_text)
+
+# --------------------------------------------------------------------------
+
+SAEM_DEADLINES_URL = ("https://www.saem.org/meetings-and-events/annual-meeting/"
+                      "annual-meeting-navigation/education/submission-deadlines")
+ACEP_DEADLINES_URL = "https://www.acep.org/education/meetings/research"
+EUSEM_DEADLINES_URL = "https://eusemcongress.org/submit-your-abstracts/"
+EUSEM_LATE_URL = "https://eusemcongress.org/abstract-submission/"
+IFEM_HUB_URL = "https://www.ifem.cc/about_congress"
+
+
+@dataclass
+class Deadline:
+    society: str
+    cycle: str = ""            # 例如 "SAEM27"、"EUSEM 2026"
+    track: str = ""            # 例如 "Abstracts"、"Didactics"
+    kind: str = "close"        # open / close / notify
+    date_iso: str = ""
+    date_text: str = ""        # 原文，保留人工核對
+    status: str = "announced"  # announced / tba
+    confidence: str = "low"    # high / medium / low
+    source_url: str = ""
+    note: str = ""
+
+
+# --------------------------------------------------------------------------
+# 單一日期解析
+# --------------------------------------------------------------------------
+
+WEEKDAY = r"(?:Mon|Tues?|Wed(?:nes)?|Thur?s?|Fri|Sat(?:ur)?|Sun)(?:day)?,?\s*"
+
+
+def find_dates(s: str, default_year: int | None = None) -> list[tuple[int, str, str]]:
+    """
+    回傳句子裡所有日期 [(起始位置, ISO, 原文)]。
+    一個句子常常同時有會期與死線（「the 2026 Forum, taking place October 5-8,
+    opens March 4, 2026」），只取第一個會抓錯，所以要保留位置資訊，
+    讓呼叫端挑「離關鍵字最近」的那一個。
+    """
+    s = re.sub(WEEKDAY, " ", s, flags=re.I)
+    found: list[tuple[int, str, str]] = []
+
+    for m in re.finditer(r"\b(\d{4})-(\d{2})-(\d{2})\b", s):
+        found.append((m.start(), m.group(0), m.group(0)))
+
+    for m in re.finditer(rf"\b({MONTH_RE})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s*(\d{{4}})?",
+                         s, re.I):
+        y = int(m.group(3)) if m.group(3) else default_year
+        if y:
+            iso = _iso(y, MONTHS[m.group(1)[:3].lower()], int(m.group(2)))
+            if iso:
+                found.append((m.start(), iso, m.group(0).strip().rstrip(",")))
+
+    for m in re.finditer(rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+({MONTH_RE})\.?,?\s*(\d{{4}})?",
+                         s, re.I):
+        y = int(m.group(3)) if m.group(3) else default_year
+        if y:
+            iso = _iso(y, MONTHS[m.group(2)[:3].lower()], int(m.group(1)))
+            if iso:
+                found.append((m.start(), iso, m.group(0).strip().rstrip(",")))
+
+    found.sort()
+    return found
+
+
+def parse_one_date(s: str, default_year: int | None = None) -> tuple[str, str]:
+    """回傳 (ISO 日期, 原文片段)。給欄位式的頁面用（欄位裡只會有一個日期）。"""
+    hits = find_dates(s, default_year)
+    return (hits[0][1], hits[0][2]) if hits else ("", "")
+
+
+def _iso(y: int, m: int, d: int) -> str:
+    try:
+        return date(y, m, d).isoformat()
+    except ValueError:
+        return ""
+
+
+# --------------------------------------------------------------------------
+# SAEM：結構化程度最高，逐軌抓
+# --------------------------------------------------------------------------
+
+SAEM_TRACKS = ["Advanced EM Workshops", "Didactics", "Innovations", "IGNITE!",
+               "Abstracts", "Clinical Images", "Year in Review", "Keynote",
+               "AEMP", "Lightning Orals"]
+
+
+def parse_saem_deadlines(text: str) -> list[Deadline]:
+    """
+    SAEM27 Submission Calendar 版型：
+        Advanced EM Workshops
+        Submissions Open: Monday, August 3, 2026
+        Submissions Close: Wednesday, September 16, 2026
+    """
+    out: list[Deadline] = []
+    cycle, cyc_year = "", None
+    m = re.search(r"SAEM(\d{2})\s+Submission", text, re.I)
+    if m:
+        cycle, cyc_year = f"SAEM{m.group(1)}", 2000 + int(m.group(1))
+
+    lines = text.splitlines()
+    current = ""
+    for ln in lines:
+        stripped = ln.strip()
+
+        # 更新「目前這一軌是什麼」
+        for t in SAEM_TRACKS:
+            if re.fullmatch(rf"\*?\*?{re.escape(t)}\*?\*?\s*(?:Learn\s*more)?", stripped, re.I):
+                current = t
+                break
+        else:
+            if (stripped and len(stripped) < 45 and ":" not in stripped
+                    and not re.match(r"(Learn|Explore|Back to)", stripped, re.I)
+                    and not re.search(r"\d{4}", stripped)
+                    and re.match(r"^[A-Z]", stripped)
+                    and len(stripped.split()) <= 5):
+                current = stripped.strip("*")
+
+        m2 = re.match(r"\*{0,2}Submissions?\s+(Open|Close)s?\*{0,2}\s*:?\s*(.+)$",
+                      stripped, re.I)
+        if m2 and current:
+            kind = "open" if m2.group(1).lower() == "open" else "close"
+            iso, raw = parse_one_date(m2.group(2), cyc_year)
+            out.append(Deadline(
+                society="SAEM", cycle=cycle, track=current, kind=kind,
+                date_iso=iso, date_text=raw or m2.group(2).strip(),
+                status="announced" if iso else "tba",
+                confidence="high" if iso else "low",
+                source_url=SAEM_DEADLINES_URL))
+    return out
+
+
+# --------------------------------------------------------------------------
+# 通用敘述句掃描器（EuSEM / ACEP / IFEM）
+# --------------------------------------------------------------------------
+
+CLOSE_WORDS = r"(?:deadline|close[sd]?|due|last day|until|by)"
+OPEN_WORDS = r"(?:open[s]?|opening|now open|will open)"
+
+
+def scan_deadline_sentences(text: str, society: str, url: str,
+                            cycle: str = "", default_year: int | None = None,
+                            confidence: str = "medium") -> list[Deadline]:
+    """
+    在自由文字裡找「跟摘要投稿有關 + 帶日期」的句子。
+    刻意保守：句子必須同時出現 abstract/submission 這類關鍵字與死線字眼，
+    才會被當成死線，否則會把註冊優惠、飯店訂房的日期一起撈進來。
+    """
+    out: list[Deadline] = []
+    seen: set[tuple[str, str]] = set()
+
+    for chunk in re.split(r"(?<=[.!?•\n])\s+", text):
+        low = chunk.lower()
+        if not re.search(r"abstract|submission|submit", low):
+            continue
+        if len(chunk) > 400:
+            continue
+
+        is_open = bool(re.search(OPEN_WORDS, low))
+        is_close = bool(re.search(CLOSE_WORDS, low))
+        if not (is_open or is_close):
+            continue
+
+        track = ("Late-breaking Abstracts"
+                 if "late" in low and "break" in low else "Abstracts")
+
+        # 「open from A to B」這種一句包兩個日期的情形，B 才是死線
+        rng = re.search(rf"from\s+(.{{4,30}}?)\s+to\s+(.{{4,40}}?)(?:[.,]|$)", chunk, re.I)
+        if rng:
+            for kind, part in (("open", rng.group(1)), ("close", rng.group(2))):
+                iso, raw = parse_one_date(part, default_year)
+                if iso and (kind, track, iso) not in seen:
+                    seen.add((kind, track, iso))
+                    out.append(Deadline(society=society, cycle=cycle, track=track,
+                                        kind=kind, date_iso=iso, date_text=raw,
+                                        confidence=confidence, source_url=url,
+                                        note=chunk.strip()[:160]))
+            continue
+
+        hits = find_dates(chunk, default_year)
+        if not hits:
+            # 「Late Breaking Abstracts submission: TBA」也是有用的資訊：
+            # 代表這一軌存在但還沒公布，之後日期一出現就會被偵測為新增。
+            if re.search(r"\bTBA\b|to be (announced|confirmed)", chunk, re.I):
+                key = ("close", track, "")
+                if key not in seen:
+                    seen.add(key)
+                    out.append(Deadline(society=society, cycle=cycle, track=track,
+                                        kind="close", status="tba",
+                                        confidence=confidence, source_url=url,
+                                        note=chunk.strip()[:160]))
+            continue
+
+        # 一句裡有多個日期時，取「離關鍵字最近、且在其後」的那個。
+        # 例：「the 2026 Forum, taking place October 5-8, opens March 4, 2026」
+        # 這裡要的是 March 4，不是會期 October 5。
+        kind = "close" if is_close else "open"
+        kw = re.search(CLOSE_WORDS if is_close else OPEN_WORDS, low)
+        anchor = kw.start() if kw else 0
+        after = [h for h in hits if h[0] >= anchor]
+        pos, iso, raw = (after[0] if after
+                         else min(hits, key=lambda h: abs(h[0] - anchor)))
+
+        if (kind, track, iso) in seen:
+            continue
+        seen.add((kind, track, iso))
+        out.append(Deadline(society=society, cycle=cycle, track=track, kind=kind,
+                            date_iso=iso, date_text=raw, confidence=confidence,
+                            source_url=url, note=chunk.strip()[:160]))
+    return out
+
+
+def parse_eusem_deadlines(text: str, url: str = EUSEM_DEADLINES_URL) -> list[Deadline]:
+    m = re.search(r"EUSEM\s*(\d{4})", text, re.I)
+    year = int(m.group(1)) if m else None
+    cycle = f"EUSEM {year}" if year else "EUSEM"
+    return scan_deadline_sentences(text, "EUSEM", url, cycle, year, confidence="medium")
+
+
+def parse_acep_deadlines(text: str, url: str = ACEP_DEADLINES_URL) -> list[Deadline]:
+    # ACEP 兩種寫法都要吃：「ACEP27 Research Forum」與「the 2026 ACEP Research Forum」
+    m = re.search(r"ACEP\s?(\d{2})\s+Research Forum", text, re.I)
+    m2 = re.search(r"\b(20\d{2})\s+ACEP\s+Research Forum", text, re.I)
+    if m:
+        year, cycle = 2000 + int(m.group(1)), f"ACEP{m.group(1)}"
+    elif m2:
+        year, cycle = int(m2.group(1)), f"ACEP{str(m2.group(1))[2:]}"
+    else:
+        year, cycle = None, "ACEP Research Forum"
+    rows = scan_deadline_sentences(text, "ACEP", url, cycle, year, confidence="low")
+    for r in rows:
+        r.track = "Research Forum Abstracts"
+    return rows
+
+
+# --------------------------------------------------------------------------
+# IFEM：congress 官網每年換網域，先從 ifem.cc 找出當期連結
+# --------------------------------------------------------------------------
+
+def discover_ifem_congress_site(session: requests.Session | None = None) -> str | None:
+    """
+    ifem.cc/about_congress 上「More information and register」指向當期
+    congress 網站（例如 icem2026.com）。網域每年都換，所以動態發現，
+    不要寫死。
+    """
+    s = session or requests.Session()
+    try:
+        r = s.get(IFEM_HUB_URL, headers=HEADERS, timeout=TIMEOUT)
+        r.raise_for_status()
+    except Exception:
+        return None
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(r.text, "html.parser")
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if re.search(r"https?://(?:www\.)?(icem|ifem)\d{4}\.", href, re.I):
+            return href
+    return None
+
+
+# --------------------------------------------------------------------------
+# 主流程
+# --------------------------------------------------------------------------
+
+def collect_deadlines(today: date | None = None) -> list[Deadline]:
+    today = today or date.today()
+    session = requests.Session()
+    out: list[Deadline] = []
+
+    jobs = [
+        ("SAEM", SAEM_DEADLINES_URL, parse_saem_deadlines),
+        ("EUSEM", EUSEM_DEADLINES_URL, parse_eusem_deadlines),
+        ("ACEP", ACEP_DEADLINES_URL, parse_acep_deadlines),
+    ]
+    for society, url, parser in jobs:
+        try:
+            out.extend(parser(fetch_text(url, session)))
+        except Exception as exc:
+            out.append(Deadline(society=society, status="tba", source_url=url,
+                                note=f"擷取失敗：{type(exc).__name__}: {exc}"))
+
+    # EuSEM 的 late-breaking 在另一頁
+    try:
+        out.extend(parse_eusem_deadlines(fetch_text(EUSEM_LATE_URL, session), EUSEM_LATE_URL))
+    except Exception:
+        pass
+
+    # IFEM：先找出當期 congress 網站再掃
+    site = discover_ifem_congress_site(session)
+    if site:
+        try:
+            txt = fetch_text(site, session)
+            got = scan_deadline_sentences(txt, "IFEM", site, confidence="low")
+            for g in got:
+                g.cycle = "ICEM / IFEM Global Congress"
+            out.extend(got)
+        except Exception:
+            pass
+    if not any(d.society == "IFEM" and d.date_iso for d in out):
+        out.append(Deadline(society="IFEM", cycle="下一屆 IFEM Global Congress",
+                            track="Abstracts", status="tba", confidence="high",
+                            source_url=site or IFEM_HUB_URL,
+                            note="當期 congress 官網尚未開放投稿；每年約在會期前 8–10 個月公布"))
+
+    out = dedupe(out)
+    out.sort(key=lambda d: (d.date_iso or "9999", d.society, d.track))
+    return out
+
+
+def dedupe(rows: list[Deadline]) -> list[Deadline]:
+    """同一 (學會, 軌, 種類, 日期) 只留信心最高的一筆。"""
+    rank = {"high": 0, "medium": 1, "low": 2}
+    best: dict[tuple, Deadline] = {}
+    for r in rows:
+        k = (r.society, r.track, r.kind, r.date_iso)
+        if k not in best or rank[r.confidence] < rank[best[k].confidence]:
+            best[k] = r
+    return list(best.values())
+
+
+def upcoming(rows: list[Deadline], today: date, horizon_days: int = 400) -> list[Deadline]:
+    out = []
+    for r in rows:
+        if not r.date_iso:
+            out.append(r)
+            continue
+        try:
+            delta = (date.fromisoformat(r.date_iso) - today).days
+        except ValueError:
+            continue
+        if 0 <= delta <= horizon_days:
+            out.append(r)
+    return out
+
+
+def days_left(r: Deadline, today: date) -> int | None:
+    if not r.date_iso:
+        return None
+    try:
+        return (date.fromisoformat(r.date_iso) - today).days
+    except ValueError:
+        return None

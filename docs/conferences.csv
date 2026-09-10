@@ -1,0 +1,18 @@
+﻿society,name,year,date_text,start,end,city,country_or_state,venue,source_url,note
+ASEM,13th Asian Conference on Emergency Medicine,2025,10-13 Dec 2025,2025-12-10,2025-12-13,Dubai,UAE,,https://www.asiansem.org/events-and-sponsorship,ACEM 兩年一次
+IFEM,25th International Conference on Emergency Medicine,2026,9-13 JUNE 2026,2026-06-09,2026-06-13,Hamburg,Germany,,https://www.ifem.cc/about_congress,Host: German Association for Emergency Medicine (DGINA)
+EUSEM,European Emergency Medicine Congress (EUSEM 2026),2026,25-27 September ,2026-09-25,2026-09-27,Paris,,,https://eusemcongress.org/,城市欄位靠行銷文案推測，建議人工確認
+SEMS,SEMS Annual Scientific Meeting 2027,2027,12-14 March 2027,2027-03-12,2027-03-14,Singapore,,,https://sems-online.com/category/sems-asm/,取自 SEMS 網站貼文，信心中等，建議人工確認
+SAEM,SAEM27 Annual Meeting,2027,"May 18-21, 2027",2027-05-18,2027-05-21,San Francisco,CA,San Francisco Marriott Marquis,https://www.saem.org/meetings-and-events/future-meetings,
+ACEP,ACEP27 Scientific Assembly,2027,10/25/2027 - 10/28/2027,2027-10-25,2027-10-28,Boston,Massachusetts,,https://www.acep.org/sa/general-information/future-dates,
+SAEM,SAEM28 Annual Meeting,2028,"May 16-19, 2028",2028-05-16,2028-05-19,Austin,TX,JW Marriott Austin,https://www.saem.org/meetings-and-events/future-meetings,
+ACEP,ACEP28 Scientific Assembly,2028,9/17/2028 - 9/20/2028,2028-09-17,2028-09-20,Las Vegas,Nevada,,https://www.acep.org/sa/general-information/future-dates,
+ASEM,14th Asian Conference on Emergency Medicine,2028,20-25 Oct 2028,2028-10-20,2028-10-25,Singapore,,,https://www.asiansem.org/events-and-sponsorship,ACEM 兩年一次
+SAEM,SAEM29 Annual Meeting,2029,May 15-18,2029-05-15,2029-05-18,Las Vegas,NV,Paris Las Vegas,https://www.saem.org/meetings-and-events/future-meetings,year inferred from meeting code
+ACEP,ACEP29 Scientific Assembly,2029,10/1/2029 - 10/4/2029,2029-10-01,2029-10-04,Philadelphia,Pennsylvania,,https://www.acep.org/sa/general-information/future-dates,
+ACEP,ACEP30 Scientific Assembly,2030,10/17/2030 - 10/20/2030,2030-10-17,2030-10-20,San Francisco,California,,https://www.acep.org/sa/general-information/future-dates,
+ACEP,ACEP31 Scientific Assembly,2031,10/27/2031 - 10/30/2031,2031-10-27,2031-10-30,Chicago,Illinois,,https://www.acep.org/sa/general-information/future-dates,
+ACEP,ACEP32 Scientific Assembly,2032,10/4/2032 - 10/7/2032,2032-10-04,2032-10-07,Dallas,Texas,,https://www.acep.org/sa/general-information/future-dates,
+HKCEM,消息流中未偵測到年會,,,,,,,,https://hkcem.org.hk/,HKCEM 無固定年會頁面，另見 hkcemevent.com
+IFEM,26th IFEM Global Congress on Emergency Medicine,2027,JUNE 2027,,,Malaysia,,,https://www.ifem.cc/about_congress,Host: Malaysian College of Emergency Medicine
+IFEM,27th IFEM Global Congress on Emergency Medicine,2028,JUNE 2028,,,Brazil,,,https://www.ifem.cc/about_congress,Host: Brazilian Association of Emergency Medicine
