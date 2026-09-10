@@ -389,9 +389,20 @@ def main() -> int:
         gap_notes.extend(dropped)
         ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
         merged, warnings = merge_with_previous(fresh, old)
-        changes = diff(merged, old)
-        deadlines = [asdict(d) for d in collect_deadlines()]
-        dl_changes = diff_deadlines(deadlines, old_dl)
+        try:
+            deadlines = [asdict(d) for d in collect_deadlines()]
+        except Exception as exc:
+            print(f"[error] 死線擷取整體失敗：{type(exc).__name__}: {exc}")
+            deadlines = old_dl
+
+        # 通知計算包在 try 裡：它只是附加價值，不該有能力擋住資料落地與網頁更新。
+        # 先前就是通知邏輯的一個 NameError 讓整站連續多次停止更新。
+        try:
+            changes = diff(merged, old)
+            dl_changes = diff_deadlines(deadlines, old_dl)
+        except Exception as exc:
+            print(f"[error] 變動比對失敗（不影響資料與網頁）：{type(exc).__name__}: {exc}")
+            changes, dl_changes = [], [f"變動比對發生錯誤：{exc}"]
 
     DATA.parent.mkdir(parents=True, exist_ok=True)
     DATA.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
