@@ -49,6 +49,18 @@ SSEM_SITE = "https://www.ssem.hk/index"
 SEMS_URL = "https://sems-online.com/"
 IFEM_EVENTS_URL = "https://www.ifem.cc/events"
 
+# 台灣急診醫學會的「國際學術活動」頁：列出 TSEM 認可積分的國外會議，
+# 每筆都有主辦學會與日期。這是一個很好的**補漏來源**——例如 HKCEM 的
+# SSEM 日期在這裡查得到，而 HKCEM 自己的官網不一定發了公告。
+#
+# 但它只給開始日期、不給區間，所以定位是「補主要來源沒抓到的」，
+# 不覆蓋已經有完整日期區間的資料。
+TSEM_INTL_URL = "https://www.sem.org.tw/Activity/C/Index"
+
+# 主辦單位縮寫 → 本專案的學會代號
+TSEM_ABBR = {"ACEP": "ACEP", "SAEM": "SAEM", "IFEM": "IFEM", "EUSEM": "EUSEM",
+             "EuSEM": "EUSEM", "HKCEM": "HKCEM", "ASEM": "ASEM", "SEMS": "SEMS"}
+
 ASIA_SOCIETIES = ["ASEM", "HKCEM", "SEMS"]
 
 
@@ -258,3 +270,55 @@ def parse_ifem_events(text: str) -> list[Conference]:
                     note="取自 IFEM events 頁，為成員學會活動，信心低"))
                 break
     return dedupe_conferences(out)
+
+
+# --------------------------------------------------------------------------
+# 台灣急診醫學會的國際學術活動列表（補漏用）
+# --------------------------------------------------------------------------
+
+def parse_tsem_intl(text: str) -> list[Conference]:
+    """
+    每筆的格式是：
+        <會議名稱> <主辦單位全名 (縮寫)> YYYY/MM/DD 國際學術活動
+
+    以「國際學術活動」這個固定結尾切開，再從每段的尾巴往回取縮寫與日期，
+    比整行做正規表示式穩定——會議名稱裡常有括號和數字，容易誤配。
+    """
+    out = []
+    for chunk in text.split("國際學術活動")[:-1]:
+        tail = chunk.strip()[-200:]
+        m = re.search(r"\(([A-Za-z]{3,8})\)\s*(\d{4})/(\d{1,2})/(\d{1,2})\s*$", tail)
+        if not m:
+            continue
+        abbr, y, mo, d = m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4))
+        society = TSEM_ABBR.get(abbr) or TSEM_ABBR.get(abbr.upper())
+        if not society:
+            continue
+        try:
+            start = date(y, mo, d).isoformat()
+        except ValueError:
+            continue
+        # 會議名稱在主辦單位全名之前。先只取最後一行（避免把前一筆的尾巴
+        # 或頁面標題吃進來），再從主辦單位全名處切斷。
+        name = tail[:m.start()].strip().splitlines()[-1].strip()
+        cut = re.search(r"\s(American College|Society for|Hong Kong College|"
+                        r"International Federation|European Society|Asian Society|"
+                        r"Taiwan Society|Japanese Association|Korean Society)", name)
+        if cut:
+            name = name[:cut.start()].strip()
+        name = re.sub(r"\s{2,}", " ", name)[:110].strip()
+        out.append(Conference(
+            society=society, name=name or f"{society} {y}", year=y,
+            date_text=f"{y}/{mo}/{d}", start=start, end=start,
+            source_url=TSEM_INTL_URL,
+            note="日期取自台灣急診醫學會國際學術活動列表；該表只列開始日期"))
+    return dedupe_conferences(out)
+
+
+def scrape_tsem(session: requests.Session | None = None) -> list[Conference]:
+    s = session or requests.Session()
+    try:
+        return parse_tsem_intl(fetch_text(TSEM_INTL_URL, s))
+    except Exception as exc:
+        print(f"[warn] TSEM 國際學術活動列表擷取失敗：{type(exc).__name__}: {exc}")
+        return []
