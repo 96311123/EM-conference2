@@ -18,7 +18,7 @@ import json
 import os
 import sys
 from dataclasses import asdict
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 from em_conferences import scrape, SCRAPERS
@@ -29,19 +29,72 @@ from render import write_all
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data" / "conferences.json"
 DL_DATA = ROOT / "data" / "deadlines.json"
+ARCHIVE = ROOT / "data" / "archive.json"
 DOCS = ROOT / "docs"
 
 
-# ASEM 的 events 頁把 1998 年以來的每一屆都列出來，SEMS 的貼文也會翻出
-# 好幾年前的 ASM。這些對「接下來要投哪個會」毫無幫助，反而會把儀表板和
-# 變動通知淹掉。只保留最近一年內結束的與尚未發生的。
-KEEP_PAST_DAYS = 365
+# 歷史場次（ASEM 從 1998 年列到今天）全部保留在資料檔裡，供封存頁使用；
+# 主頁只顯示今年起的場次，切分在 render 那一層做。
+#
+# 但通知要另外處理：一個 2004 年的會議被「新增」進資料庫，對你毫無意義，
+# 只會把真正重要的變動淹掉。所以已經結束的場次不產生新增通知。
+def is_past(r: dict, today: date) -> bool:
+    end = r.get("end") or ""
+    return bool(end) and end < today.isoformat()
 
 
-def drop_old(rows: list[dict], today: date) -> tuple[list[dict], int]:
-    cutoff = (today - timedelta(days=KEEP_PAST_DAYS)).isoformat()
-    kept = [r for r in rows if not r.get("end") or r["end"] >= cutoff]
-    return kept, len(rows) - len(kept)
+# ------------------------------------------------------------------
+# 累積式封存
+# ------------------------------------------------------------------
+# 學會官網只列「未來」的場次：SAEM27 開完就會從 Future Meetings 頁消失，
+# ACEP 也一樣。如果資料檔只反映當下抓到的東西，歷史會隨時間流失，
+# past.html 反而愈來愈空。
+#
+# 所以另外維護 archive.json：只進不出。每次抓到的場次都併進去，
+# 官網撤下的仍然保留，只標記 delisted，並記下首末次看到的日期。
+def akey(r: dict) -> str:
+    return f'{r.get("society")}|{r.get("year")}|{r.get("start") or r.get("date_text") or ""}'
+
+
+def load_archive() -> list[dict]:
+    if ARCHIVE.exists():
+        try:
+            return json.loads(ARCHIVE.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return []
+    return []
+
+
+def update_archive(archive: list[dict], current: list[dict],
+                   ok_societies: set[str], today: date) -> tuple[list[dict], int]:
+    stamp = today.isoformat()
+    idx = {akey(r): r for r in archive}
+    added = 0
+
+    for r in current:
+        k = akey(r)
+        if k in idx:
+            keep = idx[k]
+            first = keep.get("first_seen", stamp)
+            keep.update(r)                    # 官網若更正了地點或會場，跟著更新
+            keep["first_seen"] = first
+            keep["last_seen"] = stamp
+            keep["delisted"] = False
+        else:
+            r = dict(r, first_seen=stamp, last_seen=stamp, delisted=False)
+            idx[k] = r
+            added += 1
+
+    # 這次成功抓取的學會，若某筆沒再出現，代表官網撤下了——保留但標記。
+    # 只對成功抓取的學會這樣做：連線失敗時不能把整個學會誤判為全部撤下。
+    live = {akey(r) for r in current}
+    for k, r in idx.items():
+        if r.get("society") in ok_societies and k not in live:
+            r["delisted"] = True
+
+    out = list(idx.values())
+    out.sort(key=lambda r: (r.get("start") or "9999", r.get("society", "")))
+    return out, added
 
 
 def key(r: dict) -> str:
@@ -143,6 +196,8 @@ def diff(new: list[dict], old: list[dict]) -> list[str]:
                        f"{r.get('start') or r.get('date_text') or '日期未定'}"
                        f" @ {r.get('city') or '地點未定'}")
     for k in sorted(o.keys() - n.keys()):
+        if is_past(o[k], today):
+            continue          # 開完的會從官網下架是常態，已存進 archive.json
         changes.append(f"移除　{k.replace('|', ' ')}（官網已不再列出）")
     for k in sorted(n.keys() & o.keys()):
         for f in fields:
@@ -196,9 +251,10 @@ def main() -> int:
     if args.offline:
         merged = json.loads(Path(args.offline).read_text(encoding="utf-8"))
         deadlines, warnings, changes, dl_changes = old_dl, [], [], []
+        ok_societies = set()
     else:
         fresh = [asdict(c) for c in scrape()] + [asdict(c) for c in scrape_asia()]
-        fresh, dropped = drop_old(fresh, date.today())
+        ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
         merged, warnings = merge_with_previous(fresh, old)
         changes = diff(merged, old)
         deadlines = [asdict(d) for d in collect_deadlines()]
@@ -208,11 +264,18 @@ def main() -> int:
     DATA.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
     DL_DATA.write_text(json.dumps(deadlines, ensure_ascii=False, indent=2),
                        encoding="utf-8")
-    write_all(merged, DOCS, today=date.today(), deadlines=deadlines)
-    write_csv(merged, DOCS / "conferences.csv")
+
+    archive, n_new = update_archive(load_archive(), merged, ok_societies, date.today())
+    ARCHIVE.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # 網頁用累積封存而非當次抓取結果，這樣 past.html 只會愈來愈完整
+    write_all(archive, DOCS, today=date.today(), deadlines=deadlines)
+    write_csv(archive, DOCS / "conferences.csv")
 
     emit(f"## 追蹤結果 {date.today().isoformat()}\n")
-    emit(f"共 {len(merged)} 筆場次、{len(deadlines)} 筆死線。\n")
+    emit(f"本次抓到 {len(merged)} 筆場次、{len(deadlines)} 筆死線。"
+         f"封存累計 {len(archive)} 筆"
+         + (f"（新增 {n_new} 筆）" if n_new else "") + "。\n")
 
     urgent = urgent_list(deadlines, date.today())
     if urgent:
