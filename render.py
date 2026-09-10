@@ -574,8 +574,9 @@ def render_html(rows: list[dict], today: date, generated: str,
 {hero}
 
 <section>
-  <h2>投稿死線</h2>
-  {dl_html}
+  <h2>{today.year} 年起的場次</h2>
+  {cards_html}
+  {archive_link}
 </section>
 
 <section style="margin-top:3rem">
@@ -584,23 +585,27 @@ def render_html(rows: list[dict], today: date, generated: str,
 </section>
 
 <section style="margin-top:3rem">
-  <h2>{today.year} 年起的場次</h2>
-  {cards_html}
-  {archive_link}
+  <h2>投稿死線</h2>
+  {dl_html}
 </section>
 
 <footer>
-  <p>資料每月自動擷取自各學會官方頁面：</p>
+  <p>每週一自動擷取自各學會官方頁面：</p>
   <ul>
-    <li>ACEP — acep.org/sa/general-information/future-dates</li>
-    <li>SAEM — saem.org/meetings-and-events/future-meetings</li>
-    <li>IFEM — ifem.cc/about_congress</li>
-    <li>EuSEM — eusemcongress.org</li>
+    <li>ACEP 美國急診醫師學會 — acep.org/sa/general-information/future-dates</li>
+    <li>SAEM 美國學術急診醫學會 — saem.org/meetings-and-events/future-meetings</li>
+    <li>IFEM 國際急診醫學聯盟 — ifem.cc/about_congress</li>
+    <li>EuSEM 歐洲急診醫學會 — eusemcongress.org</li>
+    <li>ASEM 亞洲急診醫學會 — asiansem.org/events-and-sponsorship</li>
+    <li>SEMS 新加坡急診 — sems-online.com（WordPress API）</li>
+    <li>HKCEM 香港急症科醫學院 — hkcem.org.hk（WordPress API）</li>
   </ul>
-  <p>虛線框代表學會只公布了月份、尚未定案確切日期。訂閱
+  <p>虛線框代表學會只公布了月份、尚未定案確切日期。已從官網下架的場次仍
+     保留在<a href="past.html">歷屆場次</a>裡。訂閱
      <a href="conferences.ics">行事曆檔</a>，或下載
      <a href="conferences.csv">CSV</a>／<a href="conferences.json">JSON</a>。</p>
-  <p>報名與投稿死線請以官方公告為準；本頁只追蹤日期與地點。</p>
+  <p>SEMS 與 HKCEM 的資料是從網站貼文推斷的，可靠度較低；報名與投稿死線
+     一律請以官方公告為準。</p>
 </footer>
 
 </div>
