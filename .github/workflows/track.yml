@@ -28,6 +28,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: 安裝套件
         run: pip install requests beautifulsoup4
@@ -61,8 +62,10 @@ jobs:
             --body-file CHANGES.md \
             --label "conference-update" || true
 
-      - name: 解析失敗時讓這次執行標記為失敗
+      # 只有「原本抓得到、現在抓不到」才標紅。已知的長期失敗（IFEM 被擋、
+      # 週期空窗等）不中斷執行，否則每週紅一次，久了你就會忽略通知。
+      - name: 有學會退步時標記為失敗
         if: steps.track.outputs.stale == 'true'
         run: |
-          echo "::error::有學會的頁面解析不出資料，很可能是官網改版，請檢查 parser。"
+          echo "::error::有學會原本抓得到、現在失敗了，很可能是官網改版。詳見 Summary。"
           exit 1
