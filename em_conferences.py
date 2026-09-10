@@ -193,10 +193,19 @@ def parse_date_range(s: str, default_year: int | None = None) -> tuple[str, str,
             mi = MONTHS[mon[:3].lower()]
             return iso(y, mi, d1), iso(y, mi, d2), m.group(0)
 
-    # 6) 單日：June 12, 2026
+    # 6) 單日（月在前）：June 12, 2026
     m = re.search(rf"({MONTH_RE})\.?\s+(\d{{1,2}}),?\s*(\d{{4}})", s, re.I)
     if m:
         mon, d1, y = m.group(1), int(m.group(2)), int(m.group(3))
+        mi = MONTHS[mon[:3].lower()]
+        return iso(y, mi, d1), iso(y, mi, d1), m.group(0)
+
+    # 7) 單日（日在前）：25 October 2025。香港與歐洲慣用這個寫法，
+    #    SSEM、EuSEM 的公告都是這種格式，一日活動很常見。
+    m = re.search(rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+({MONTH_RE})\.?,?\s*(\d{{4}})",
+                  s, re.I)
+    if m:
+        d1, mon, y = int(m.group(1)), m.group(2), int(m.group(3))
         mi = MONTHS[mon[:3].lower()]
         return iso(y, mi, d1), iso(y, mi, d1), m.group(0)
 
