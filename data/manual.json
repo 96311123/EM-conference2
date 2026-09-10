@@ -1,0 +1,28 @@
+[
+  {
+    "society": "ACEP",
+    "name": "ACEP26 Scientific Assembly",
+    "year": 2026,
+    "date_text": "October 5-8, 2026",
+    "start": "2026-10-05",
+    "end": "2026-10-08",
+    "city": "Chicago",
+    "country_or_state": "Illinois",
+    "venue": "",
+    "source_url": "https://www.acep.org/acep26",
+    "note": "人工確認；ACEP 的 Future Dates 頁只列明年以後，不含當屆"
+  },
+  {
+    "society": "HKCEM",
+    "name": "Scientific Symposium on Emergency Medicine (SSEM 2026)",
+    "year": 2026,
+    "date_text": "30 October 2026",
+    "start": "2026-10-30",
+    "end": "2026-10-30",
+    "city": "Hong Kong",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ssem.hk/index",
+    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表"
+  }
+]
