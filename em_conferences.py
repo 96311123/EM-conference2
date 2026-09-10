@@ -229,6 +229,9 @@ def split_location(s: str) -> tuple[str, str]:
 # --------------------------------------------------------------------------
 
 ACEP_URL = "https://www.acep.org/sa/general-information/future-dates"
+# Future Dates 頁只列「明年以後」——今年正在辦的那一屆不在上面。
+# 對官網而言合理，對使用者而言最近的一場才最要緊，所以另外抓當屆頁面。
+ACEP_CURRENT_URL = "https://www.acep.org/topics/research"
 SAEM_URL = "https://www.saem.org/meetings-and-events/future-meetings"
 IFEM_URL = "https://www.ifem.cc/about_congress"
 EUSEM_URL = "https://eusemcongress.org/"
@@ -528,3 +531,40 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# --------------------------------------------------------------------------
+# ACEP 當屆場次（Future Dates 頁不含今年）
+# --------------------------------------------------------------------------
+
+def parse_acep_current(text: str) -> list[Conference]:
+    """
+    ACEP 的研究頁會提到當屆會期，句型類似：
+        Abstract submission for the 2026 ACEP Research Forum,
+        taking place October 5-8 in Chicago, opens March 4, 2026.
+
+    這裡只取「taking place ... in <城市>」那一段，避開同句尾巴的投稿開放日。
+    """
+    out = []
+    for m in re.finditer(
+            r"(20\d{2})\s+ACEP\s+Research Forum[^.]{0,80}?taking place\s+"
+            r"([^,]{4,40}?)\s+in\s+([A-Z][\w .'-]{2,30})", text, re.I):
+        year, when, city = int(m.group(1)), m.group(2), m.group(3).strip()
+        start, end, raw = parse_date_range(when, default_year=year)
+        if not start:
+            continue
+        out.append(Conference(
+            society="ACEP", name=f"ACEP{str(year)[2:]} Scientific Assembly",
+            year=year, date_text=raw, start=start, end=end,
+            city=city, source_url=ACEP_CURRENT_URL,
+            note="當屆場次；Future Dates 頁只列明年以後，此筆取自 ACEP 研究頁"))
+    return out
+
+
+def scrape_acep_current(session: requests.Session | None = None) -> list[Conference]:
+    s = session or requests.Session()
+    try:
+        return parse_acep_current(fetch_text(ACEP_CURRENT_URL, s))
+    except Exception as exc:
+        print(f"[warn] ACEP 當屆頁擷取失敗：{type(exc).__name__}: {exc}")
+        return []
