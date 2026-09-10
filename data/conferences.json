@@ -270,7 +270,7 @@
     "country_or_state": "Germany",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
+    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "EUSEM",
@@ -284,6 +284,32 @@
     "venue": "",
     "source_url": "https://eusemcongress.org/",
     "note": "城市欄位靠行銷文案推測，建議人工確認"
+  },
+  {
+    "society": "ACEP",
+    "name": "ACEP26 Scientific Assembly",
+    "year": 2026,
+    "date_text": "October 5–8",
+    "start": "2026-10-05",
+    "end": "2026-10-08",
+    "city": "Chicago",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.acep.org/topics/research",
+    "note": "當屆場次；Future Dates 頁只列明年以後，此筆取自 ACEP 研究頁"
+  },
+  {
+    "society": "HKCEM",
+    "name": "Hong Kong College of Emergency Medicine",
+    "year": 2026,
+    "date_text": "2026/10/30",
+    "start": "2026-10-30",
+    "end": "2026-10-30",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.sem.org.tw/Activity/C/Index",
+    "note": "日期取自台灣急診醫學會國際學術活動列表；該表只列開始日期"
   },
   {
     "society": "SAEM",
@@ -416,19 +442,6 @@
     "note": ""
   },
   {
-    "society": "HKCEM",
-    "name": "SSEM 下一屆日期尚未在 HKCEM 官網公布",
-    "year": null,
-    "date_text": "",
-    "start": "",
-    "end": "",
-    "city": "Hong Kong",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://www.ssem.hk/index",
-    "note": "HKCEM 年會為 SSEM，每年十月底；詳情見 ssem.hk（該站禁止自動擷取，需人工查看）"
-  },
-  {
     "society": "IFEM",
     "name": "26th IFEM Global Congress on Emergency Medicine",
     "year": 2027,
@@ -439,7 +452,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Malaysian College of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
+    "note": "Host: Malaysian College of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "IFEM",
@@ -452,6 +465,6 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
+    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
   }
 ]
