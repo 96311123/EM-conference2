@@ -1,6 +1,214 @@
 [
   {
     "society": "ASEM",
+    "name": "1st Asian Conference on Emergency Medicine",
+    "year": 1998,
+    "date_text": "22-25 Oct 1998",
+    "start": "1998-10-22",
+    "end": "1998-10-25",
+    "city": "Singapore",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "2nd Asian Conference on Emergency Medicine",
+    "year": 2001,
+    "date_text": "22-25 Mar 2001",
+    "start": "2001-03-22",
+    "end": "2001-03-25",
+    "city": "Taipei",
+    "country_or_state": "Taiwan",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "3rd Asian Conference on Emergency Medicine",
+    "year": 2004,
+    "date_text": "7-10 Oct 2004",
+    "start": "2004-10-07",
+    "end": "2004-10-10",
+    "city": "Hong Kong",
+    "country_or_state": "China",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "4th Asian Conference on Emergency Medicine",
+    "year": 2007,
+    "date_text": "23-25 Mar 2007",
+    "start": "2007-03-23",
+    "end": "2007-03-25",
+    "city": "Kuala Lumpur",
+    "country_or_state": "Malaysia",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "5th Asian Conference on Emergency Medicine",
+    "year": 2009,
+    "date_text": "16-19 May 2009",
+    "start": "2009-05-16",
+    "end": "2009-05-19",
+    "city": "Busan",
+    "country_or_state": "Korea",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "6th Asian Conference on Emergency Medicine",
+    "year": 2011,
+    "date_text": "4-6 Jul 2011",
+    "start": "2011-07-04",
+    "end": "2011-07-06",
+    "city": "Bangkok",
+    "country_or_state": "Thailand",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "7th Asian Conference on Emergency Medicine",
+    "year": 2013,
+    "date_text": "23-25 Oct 2013",
+    "start": "2013-10-23",
+    "end": "2013-10-25",
+    "city": "Tokyo",
+    "country_or_state": "Japan",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "8th Asian Conference on Emergency Medicine",
+    "year": 2015,
+    "date_text": "7-10 Nov 2015",
+    "start": "2015-11-07",
+    "end": "2015-11-10",
+    "city": "Taipei",
+    "country_or_state": "Taiwan",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "9th Asian Conference on Emergency Medicine",
+    "year": 2017,
+    "date_text": "22-25 Nov 2017",
+    "start": "2017-11-22",
+    "end": "2017-11-25",
+    "city": "Antalya",
+    "country_or_state": "Turkey",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "10th Asian Conference on Emergency Medicine",
+    "year": 2019,
+    "date_text": "7-10 Nov 2019",
+    "start": "2019-11-07",
+    "end": "2019-11-10",
+    "city": "New Delhi",
+    "country_or_state": "India",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "ASEM",
+    "name": "11th Asian Conference on Emergency Medicine",
+    "year": 2021,
+    "date_text": "16-19 Dec 2021",
+    "start": "2021-12-16",
+    "end": "2021-12-19",
+    "city": "Hong Kong",
+    "country_or_state": "China",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "SEMS",
+    "name": "Sign up for SEMS 2023 25-25 Feb 2023 now!",
+    "year": 2023,
+    "date_text": "25-25 Feb 2023",
+    "start": "2023-02-25",
+    "end": "2023-02-25",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://sems-online.com/2022/10/08/sign-up-for-sems-2023-25-25-feb-2023-now/",
+    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
+  },
+  {
+    "society": "ASEM",
+    "name": "12th Asian Conference on Emergency Medicine",
+    "year": 2023,
+    "date_text": "28-30 Apr 2023",
+    "start": "2023-04-28",
+    "end": "2023-04-30",
+    "city": "Clark Freeport, Angeles City",
+    "country_or_state": "Philippines",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次"
+  },
+  {
+    "society": "SEMS",
+    "name": "Emirates Society of Emergency Medicine ESEM 24 from 11-14 Dec 2024",
+    "year": 2024,
+    "date_text": "11-14 Dec 2024",
+    "start": "2024-12-11",
+    "end": "2024-12-14",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://sems-online.com/2024/05/07/emirates-society-of-emergency-medicine-esem-24-from-11-14-dec-2024/",
+    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
+  },
+  {
+    "society": "SEMS",
+    "name": "SEMS ASM 2025 early bird registration has begun!",
+    "year": 2025,
+    "date_text": "27-28 Feb 2025",
+    "start": "2025-02-27",
+    "end": "2025-02-28",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://sems-online.com/2024/08/02/sems-asm-2025-early-bird-registration-has-begun/",
+    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
+  },
+  {
+    "society": "SEMS",
+    "name": "Get ready for MEMC25 in Budapest from 14-17 Aug 2025!",
+    "year": 2025,
+    "date_text": "14-17 Aug 2025",
+    "start": "2025-08-14",
+    "end": "2025-08-17",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://sems-online.com/2025/05/25/get-ready-for-memc25-in-budapest-from-14-17-aug-2025/",
+    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
+  },
+  {
+    "society": "ASEM",
     "name": "13th Asian Conference on Emergency Medicine",
     "year": 2025,
     "date_text": "10-13 Dec 2025",
@@ -13,6 +221,19 @@
     "note": "ACEM 兩年一次"
   },
   {
+    "society": "SEMS",
+    "name": "Sign up for ACEM 2025 10-13 Dec now!",
+    "year": 2025,
+    "date_text": "10-13 Dec ",
+    "start": "2025-12-10",
+    "end": "2025-12-13",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://sems-online.com/2025/07/05/sign-up-for-acem-2025-10-13-dec-now/",
+    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
+  },
+  {
     "society": "IFEM",
     "name": "25th International Conference on Emergency Medicine",
     "year": 2026,
@@ -23,7 +244,7 @@
     "country_or_state": "Germany",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: German Association for Emergency Medicine (DGINA)"
+    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "EUSEM",
@@ -37,19 +258,6 @@
     "venue": "",
     "source_url": "https://eusemcongress.org/",
     "note": "城市欄位靠行銷文案推測，建議人工確認"
-  },
-  {
-    "society": "SEMS",
-    "name": "SEMS Annual Scientific Meeting 2027",
-    "year": 2027,
-    "date_text": "12-14 March 2027",
-    "start": "2027-03-12",
-    "end": "2027-03-14",
-    "city": "Singapore",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://sems-online.com/category/sems-asm/",
-    "note": "取自 SEMS 網站貼文，信心中等，建議人工確認"
   },
   {
     "society": "SAEM",
@@ -192,7 +400,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://hkcem.org.hk/",
-    "note": "HKCEM 無固定年會頁面，另見 hkcemevent.com"
+    "note": "HKCEM 無固定年會頁面；學術活動另見 hkcemevent.com 與 e-portfolio 的 Event Calendar"
   },
   {
     "society": "IFEM",
@@ -205,7 +413,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Malaysian College of Emergency Medicine"
+    "note": "Host: Malaysian College of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "IFEM",
@@ -218,6 +426,6 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine"
+    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果"
   }
 ]

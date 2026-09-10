@@ -6,8 +6,184 @@ METHOD:PUBLISH
 X-WR-CALNAME:急診國際年會
 X-WR-TIMEZONE:Asia/Taipei
 BEGIN:VEVENT
+UID:0cbe324fd471d996704a35900242a5c8@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:19981022
+DTEND;VALUE=DATE:19981026
+SUMMARY:ASEM — 1st Asian Conference on Emergency Medicine
+LOCATION:Singapore
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:2cb70bd94c65a7960841b435cd2eca38@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20010322
+DTEND;VALUE=DATE:20010326
+SUMMARY:ASEM — 2nd Asian Conference on Emergency Medicine
+LOCATION:Taipei\, Taiwan
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:ee8a1f7e17a6cb09b960e0481ef46175@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20041007
+DTEND;VALUE=DATE:20041011
+SUMMARY:ASEM — 3rd Asian Conference on Emergency Medicine
+LOCATION:Hong Kong\, China
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:9d70fa7ef426bad98a77e98713cd5d47@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20070323
+DTEND;VALUE=DATE:20070326
+SUMMARY:ASEM — 4th Asian Conference on Emergency Medicine
+LOCATION:Kuala Lumpur\, Malaysia
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:f1e482ec77ed597677d9e1924c454593@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20090516
+DTEND;VALUE=DATE:20090520
+SUMMARY:ASEM — 5th Asian Conference on Emergency Medicine
+LOCATION:Busan\, Korea
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:a68c23e69fed6ded0b786f89bdadb04f@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20110704
+DTEND;VALUE=DATE:20110707
+SUMMARY:ASEM — 6th Asian Conference on Emergency Medicine
+LOCATION:Bangkok\, Thailand
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:deed6adbe0e6b32c52e099a14f48f4e6@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20131023
+DTEND;VALUE=DATE:20131026
+SUMMARY:ASEM — 7th Asian Conference on Emergency Medicine
+LOCATION:Tokyo\, Japan
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:45e5e3aac3eb4b3a7f16d0bb317a01b6@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20151107
+DTEND;VALUE=DATE:20151111
+SUMMARY:ASEM — 8th Asian Conference on Emergency Medicine
+LOCATION:Taipei\, Taiwan
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:8119e181ae5404e13b86e219349c16b2@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20171122
+DTEND;VALUE=DATE:20171126
+SUMMARY:ASEM — 9th Asian Conference on Emergency Medicine
+LOCATION:Antalya\, Turkey
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:436a649972f77de02a40bd9391f011bf@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20191107
+DTEND;VALUE=DATE:20191111
+SUMMARY:ASEM — 10th Asian Conference on Emergency Medicine
+LOCATION:New Delhi\, India
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:9a7f314364e93c033e5a59a791f76767@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20211216
+DTEND;VALUE=DATE:20211220
+SUMMARY:ASEM — 11th Asian Conference on Emergency Medicine
+LOCATION:Hong Kong\, China
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:8cb27fcc384a5e92165489e38e4d4b61@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20230225
+DTEND;VALUE=DATE:20230226
+SUMMARY:SEMS — Sign up for SEMS 2023 25-25 Feb 2023 now!
+LOCATION:
+DESCRIPTION:Society for Emergency Medicine in Singapore\n備註：取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認\n來源：https://sems-online.com/2022/10/08/sign-up-for-sems-2023-25-25-feb-2023-now/
+URL:https://sems-online.com/2022/10/08/sign-up-for-sems-2023-25-25-feb-2023-now/
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:9500c8dc6fff82455a54463ac1ff6bbc@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20230428
+DTEND;VALUE=DATE:20230501
+SUMMARY:ASEM — 12th Asian Conference on Emergency Medicine
+LOCATION:Clark Freeport\, Angeles City\, Philippines
+DESCRIPTION:Asian Society for Emergency Medicine\n備註：ACEM 兩年一次\n來源：https://www.asiansem.org/events-and-sponsorship
+URL:https://www.asiansem.org/events-and-sponsorship
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:f0cd19fb7912f519b66bd55446df335d@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20241211
+DTEND;VALUE=DATE:20241215
+SUMMARY:SEMS — Emirates Society of Emergency Medicine ESEM 24 from 11-14 Dec 2024
+LOCATION:
+DESCRIPTION:Society for Emergency Medicine in Singapore\n備註：取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認\n來源：https://sems-online.com/2024/05/07/emirates-society-of-emergency-medicine-esem-24-from-11-14-dec-2024/
+URL:https://sems-online.com/2024/05/07/emirates-society-of-emergency-medicine-esem-24-from-11-14-dec-2024/
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:4926ecf5bdcdefd16d9b4a709efa614f@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20250227
+DTEND;VALUE=DATE:20250301
+SUMMARY:SEMS — SEMS ASM 2025 early bird registration has begun!
+LOCATION:
+DESCRIPTION:Society for Emergency Medicine in Singapore\n備註：取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認\n來源：https://sems-online.com/2024/08/02/sems-asm-2025-early-bird-registration-has-begun/
+URL:https://sems-online.com/2024/08/02/sems-asm-2025-early-bird-registration-has-begun/
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+UID:9ec2d54f6a8a5544a1e64365055218eb@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20250814
+DTEND;VALUE=DATE:20250818
+SUMMARY:SEMS — Get ready for MEMC25 in Budapest from 14-17 Aug 2025!
+LOCATION:
+DESCRIPTION:Society for Emergency Medicine in Singapore\n備註：取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認\n來源：https://sems-online.com/2025/05/25/get-ready-for-memc25-in-budapest-from-14-17-aug-2025/
+URL:https://sems-online.com/2025/05/25/get-ready-for-memc25-in-budapest-from-14-17-aug-2025/
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
 UID:f19d0647f2b4635e21384c76900b91ac@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20251210
 DTEND;VALUE=DATE:20251214
 SUMMARY:ASEM — 13th Asian Conference on Emergency Medicine
@@ -17,19 +193,30 @@ URL:https://www.asiansem.org/events-and-sponsorship
 TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
+UID:dd31dbc02ef4c77b89a93352e3dd758e@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20251210
+DTEND;VALUE=DATE:20251214
+SUMMARY:SEMS — Sign up for ACEM 2025 10-13 Dec now!
+LOCATION:
+DESCRIPTION:Society for Emergency Medicine in Singapore\n備註：取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認\n來源：https://sems-online.com/2025/07/05/sign-up-for-acem-2025-10-13-dec-now/
+URL:https://sems-online.com/2025/07/05/sign-up-for-acem-2025-10-13-dec-now/
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
 UID:7c6f7e0788d5c4f234e644f0db5abf81@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20260609
 DTEND;VALUE=DATE:20260614
 SUMMARY:IFEM — 25th International Conference on Emergency Medicine
 LOCATION:Hamburg\, Germany
-DESCRIPTION:International Federation for Emergency Medicine\n備註：Host: German Association for Emergency Medicine (DGINA)\n來源：https://www.ifem.cc/about_congress
+DESCRIPTION:International Federation for Emergency Medicine\n備註：Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果\n來源：https://www.ifem.cc/about_congress
 URL:https://www.ifem.cc/about_congress
 TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:86591cd71cc75655466de6dcce4da3c2@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20260925
 DTEND;VALUE=DATE:20260928
 SUMMARY:EUSEM — European Emergency Medicine Congress (EUSEM 2026)
@@ -39,19 +226,8 @@ URL:https://eusemcongress.org/
 TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
-UID:bcf8dc30fb886b38d5db9fc1f347b28e@em-conf-tracker
-DTSTAMP:20260910T140122Z
-DTSTART;VALUE=DATE:20270312
-DTEND;VALUE=DATE:20270315
-SUMMARY:SEMS — SEMS Annual Scientific Meeting 2027
-LOCATION:Singapore
-DESCRIPTION:Society for Emergency Medicine in Singapore\n備註：取自 SEMS 網站貼文，信心中等，建議人工確認\n來源：https://sems-online.com/category/sems-asm/
-URL:https://sems-online.com/category/sems-asm/
-TRANSP:TRANSPARENT
-END:VEVENT
-BEGIN:VEVENT
 UID:ee5667a97769f5aeb14a0ca0d8fd8605@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20270518
 DTEND;VALUE=DATE:20270522
 SUMMARY:SAEM — SAEM27 Annual Meeting
@@ -62,7 +238,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:06091dbf15263bb40fc09f1b24f769de@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20271025
 DTEND;VALUE=DATE:20271029
 SUMMARY:ACEP — ACEP27 Scientific Assembly
@@ -73,7 +249,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:818080d7cdfd4a51be8657214e02b7ec@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20280516
 DTEND;VALUE=DATE:20280520
 SUMMARY:SAEM — SAEM28 Annual Meeting
@@ -84,7 +260,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:538909e78f5d18a49dade60c973e45c7@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20280917
 DTEND;VALUE=DATE:20280921
 SUMMARY:ACEP — ACEP28 Scientific Assembly
@@ -95,7 +271,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:d9c32cdb3496f9f1f63057e99287495a@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20281020
 DTEND;VALUE=DATE:20281026
 SUMMARY:ASEM — 14th Asian Conference on Emergency Medicine
@@ -106,7 +282,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:441d7a51e0655062a483c199289444df@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20290515
 DTEND;VALUE=DATE:20290519
 SUMMARY:SAEM — SAEM29 Annual Meeting
@@ -117,7 +293,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:876c3fdbd6daa372f5d06dae7ac0a04f@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20291001
 DTEND;VALUE=DATE:20291005
 SUMMARY:ACEP — ACEP29 Scientific Assembly
@@ -128,7 +304,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:9d9a55dbe246eaa30a80d0b0ee0e68a0@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20301017
 DTEND;VALUE=DATE:20301021
 SUMMARY:ACEP — ACEP30 Scientific Assembly
@@ -139,7 +315,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:7f1e2e793c1c781423bb7b87e714ecaf@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20311027
 DTEND;VALUE=DATE:20311031
 SUMMARY:ACEP — ACEP31 Scientific Assembly
@@ -150,7 +326,7 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:0720a21ac18c63a1c350af3d49107f77@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20321004
 DTEND;VALUE=DATE:20321008
 SUMMARY:ACEP — ACEP32 Scientific Assembly
@@ -160,33 +336,8 @@ URL:https://www.acep.org/sa/general-information/future-dates
 TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
-UID:3d6156a1aa1585524c1a9e1452a669e6@em-conf-tracker
-DTSTAMP:20260910T140122Z
-DTSTART;VALUE=DATE:20260916
-DTEND;VALUE=DATE:20260917
-SUMMARY:死線：SAEM Advanced EM Workshops
-DESCRIPTION:SAEM27\n\n來源：https://www.saem.org/meetings-and-events/annual-meeting/annual-meeting-navigation/education/submission-deadlines
-URL:https://www.saem.org/meetings-and-events/annual-meeting/annual-meeting-navigation/education/submission-deadlines
-TRANSP:TRANSPARENT
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P30D
-DESCRIPTION:死線：SAEM Advanced EM Workshops（還有 30 天）
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P7D
-DESCRIPTION:死線：SAEM Advanced EM Workshops（還有 7 天）
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P1D
-DESCRIPTION:死線：SAEM Advanced EM Workshops（還有 1 天）
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
 UID:32c95a32cd132be91683f4e7eff17283@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20260923
 DTEND;VALUE=DATE:20260924
 SUMMARY:死線：SAEM Didactics
@@ -210,33 +361,8 @@ DESCRIPTION:死線：SAEM Didactics（還有 1 天）
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
-UID:c6992ee2ff6086ca5ec4fd90471deda5@em-conf-tracker
-DTSTAMP:20260910T140122Z
-DTSTART;VALUE=DATE:20261109
-DTEND;VALUE=DATE:20261110
-SUMMARY:死線：SAEM Innovations
-DESCRIPTION:SAEM27\n\n來源：https://www.saem.org/meetings-and-events/annual-meeting/annual-meeting-navigation/education/submission-deadlines
-URL:https://www.saem.org/meetings-and-events/annual-meeting/annual-meeting-navigation/education/submission-deadlines
-TRANSP:TRANSPARENT
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P30D
-DESCRIPTION:死線：SAEM Innovations（還有 30 天）
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P7D
-DESCRIPTION:死線：SAEM Innovations（還有 7 天）
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P1D
-DESCRIPTION:死線：SAEM Innovations（還有 1 天）
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
 UID:17d13fca96e8508c8f37dd7038ebd524@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20261109
 DTEND;VALUE=DATE:20261110
 SUMMARY:死線：SAEM IGNITE!
@@ -260,8 +386,33 @@ DESCRIPTION:死線：SAEM IGNITE!（還有 1 天）
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
+UID:c6992ee2ff6086ca5ec4fd90471deda5@em-conf-tracker
+DTSTAMP:20260910T145453Z
+DTSTART;VALUE=DATE:20261109
+DTEND;VALUE=DATE:20261110
+SUMMARY:死線：SAEM Innovations
+DESCRIPTION:SAEM27\n\n來源：https://www.saem.org/meetings-and-events/annual-meeting/annual-meeting-navigation/education/submission-deadlines
+URL:https://www.saem.org/meetings-and-events/annual-meeting/annual-meeting-navigation/education/submission-deadlines
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-P30D
+DESCRIPTION:死線：SAEM Innovations（還有 30 天）
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-P7D
+DESCRIPTION:死線：SAEM Innovations（還有 7 天）
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-P1D
+DESCRIPTION:死線：SAEM Innovations（還有 1 天）
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
 UID:0f6a471b6937ac8e09d5dee4aa229367@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20270105
 DTEND;VALUE=DATE:20270106
 SUMMARY:死線：SAEM Abstracts
@@ -286,7 +437,7 @@ END:VALARM
 END:VEVENT
 BEGIN:VEVENT
 UID:5ffce8a8a0327e516df82af2e537d617@em-conf-tracker
-DTSTAMP:20260910T140122Z
+DTSTAMP:20260910T145453Z
 DTSTART;VALUE=DATE:20270112
 DTEND;VALUE=DATE:20270113
 SUMMARY:死線：SAEM Clinical Images
@@ -307,32 +458,6 @@ BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:-P1D
 DESCRIPTION:死線：SAEM Clinical Images（還有 1 天）
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
-UID:abad426e666f18a13fe8c1382716777f@em-conf-tracker
-DTSTAMP:20260910T140122Z
-DTSTART;VALUE=DATE:20260415
-DTEND;VALUE=DATE:20260416
-SUMMARY:死線：EUSEM Abstracts
-DESCRIPTION:EUSEM 2026\nAbstract Submission - EUSEM 2026
-Abstracts submission will open from 23 February to 15 April 2026\, 17:00 CEST.\n來源：https://eusemcongress.org/submit-your-abstracts/
-URL:https://eusemcongress.org/submit-your-abstracts/
-TRANSP:TRANSPARENT
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P30D
-DESCRIPTION:死線：EUSEM Abstracts（還有 30 天）
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P7D
-DESCRIPTION:死線：EUSEM Abstracts（還有 7 天）
-END:VALARM
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:-P1D
-DESCRIPTION:死線：EUSEM Abstracts（還有 1 天）
 END:VALARM
 END:VEVENT
 END:VCALENDAR
