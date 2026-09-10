@@ -18,24 +18,41 @@ from pathlib import Path
 
 SOCIETY_META = {
     "ACEP":  {"full": "American College of Emergency Physicians",
+              "zh": "美國急診醫師學會",
               "meeting": "Scientific Assembly", "hue": "acep"},
     "SAEM":  {"full": "Society for Academic Emergency Medicine",
+              "zh": "美國學術急診醫學會",
               "meeting": "Annual Meeting", "hue": "saem"},
     "IFEM":  {"full": "International Federation for Emergency Medicine",
+              "zh": "國際急診醫學聯盟",
               "meeting": "Global Congress / ICEM", "hue": "ifem"},
     "EUSEM": {"full": "European Society for Emergency Medicine",
+              "zh": "歐洲急診醫學會",
               "meeting": "European EM Congress", "hue": "eusem"},
     "ASEM":  {"full": "Asian Society for Emergency Medicine",
-              "meeting": "Asian Conference (ACEM, 兩年一次)", "hue": "asem",
-              "logo": False},
-    "HKCEM": {"full": "Hong Kong College of Emergency Medicine 香港急症科醫學院",
-              "meeting": "學術活動", "hue": "hkcem", "logo": False},
+              "zh": "亞洲急診醫學會",
+              "meeting": "Asian Conference（ACEM，兩年一次）", "hue": "asem"},
     "SEMS":  {"full": "Society for Emergency Medicine in Singapore",
-              "meeting": "Annual Scientific Meeting", "hue": "sems", "logo": False},
+              "zh": "新加坡急診",
+              "meeting": "Annual Scientific Meeting", "hue": "sems"},
+    "HKCEM": {"full": "Hong Kong College of Emergency Medicine",
+              "zh": "香港急症科醫學院",
+              "meeting": "學術活動", "hue": "hkcem"},
 }
 
-# 只有這四個學會有 logo 圖檔；其餘用文字色塊，不硬湊圖片
-HAS_LOGO = {"acep", "saem", "ifem", "eusem"}
+# 七個學會都有 logo 圖檔了
+HAS_LOGO = {"acep", "saem", "ifem", "eusem", "asem", "sems", "hkcem"}
+
+
+def zh_name(code: str) -> str:
+    return SOCIETY_META.get(code, {}).get("zh", "")
+
+
+def society_label(code: str) -> str:
+    """『SEMS 新加坡急診』這種並排標示，中英文都給。"""
+    zh = zh_name(code)
+    return f"{code} {zh}" if zh else code
+
 
 
 def legend_mark(code: str, hue: str) -> str:
@@ -48,7 +65,7 @@ def band(society: str) -> str:
     """卡片頂端：有 logo 就放圖，沒有就放學會縮寫色塊。"""
     hue = SOCIETY_META.get(society, {}).get("hue", "")
     if hue in HAS_LOGO:
-        return (f'<img src="assets/{hue}.png" alt="{html.escape(society)} logo" '
+        return (f'<img src="assets/{hue}.png" alt="{html.escape(society_label(society))}" '
                 f'loading="lazy" width="360">')
     return f'<b class="{hue}">{html.escape(society)}</b>'
 
@@ -94,6 +111,18 @@ def _month_from_text(text: str) -> int | None:
         if n in low:
             return i
     return None
+
+
+def split_archive(rows: list[dict], today: date) -> tuple[list[dict], list[dict]]:
+    """
+    主頁只放今年與之後的場次；今年一月一日以前就結束的移到封存頁。
+    沒有日期的（例如只公布月份的 IFEM 2027）一律留在主頁——那是未來的事，
+    不該被當成歷史。
+    """
+    cut = date(today.year, 1, 1)
+    current = [r for r in rows if not r["_end"] or r["_end"] >= cut]
+    archive = [r for r in rows if r["_end"] and r["_end"] < cut]
+    return current, archive
 
 
 def next_up(rows: list[dict], today: date) -> dict | None:
@@ -267,7 +296,8 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 /* 左側色條刻意沿用格線上 .bar 的樣式，讓「顏色→學會」的對應一眼成立 */
 .legend span{display:flex; align-items:center; gap:.55rem;
   border-left:3px solid currentColor; padding:.2rem 0 .2rem .55rem}
-.legend b{font-weight:600; font-size:.85rem}
+.legend .lg-txt{display:flex; flex-direction:column; line-height:1.25}
+.legend .lg-txt b{font-weight:600; font-size:.82rem}
 .legend img{height:18px; width:auto; max-width:64px; object-fit:contain}
 .legend em{font-style:normal; color:var(--muted)}
 
@@ -283,6 +313,8 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .card .band b{font-size:1.35rem; font-weight:600; letter-spacing:.05em}
 .card .band em{position:absolute; right:.45rem; bottom:.35rem; font-style:normal;
   font-size:.72rem; color:var(--muted)}
+.card .soc-line{display:block; font-size:.76rem; font-weight:600;
+  margin:.6rem 0 -.35rem}
 .card .card-title{display:block; font-weight:600; font-size:1rem; line-height:1.3;
   margin:.7rem 0 .45rem}
 .card:hover .card-title,.card:focus-visible .card-title{text-decoration:underline}
@@ -325,6 +357,10 @@ td.when{white-space:nowrap}
 .dl .flag{font-size:.72rem; color:var(--muted); border:1px solid var(--rule);
   padding:0 .3rem; margin-left:.4rem; white-space:nowrap}
 .dl .note{margin:.7rem 0 0; font-size:.8rem; color:var(--muted)}
+
+.archive-link{margin:2rem 0 0; font-size:.9rem}
+.archive-link a{color:var(--muted)}
+.archive-link a:hover{color:var(--ink)}
 
 footer{margin-top:3.5rem; padding-top:1rem; border-top:1px solid var(--rule);
   font-size:.82rem; color:var(--muted)}
@@ -387,7 +423,7 @@ def deadline_section(deadlines: list[dict], today: date) -> str:
         items.append(
             f'<li class="{cls}">'
             f'<span class="when">{iso_short(d["date_iso"])}</span>'
-            f'<span class="what"><b>{html.escape(d.get("society",""))} · '
+            f'<span class="what"><b>{html.escape(society_label(d.get("society","")))} · '
             f'{html.escape(track)}</b>{flag_html}'
             f'<span>{html.escape(d.get("cycle") or "")}</span></span>'
             f'<span class="left"><b>{left}</b> 天</span></li>')
@@ -396,7 +432,7 @@ def deadline_section(deadlines: list[dict], today: date) -> str:
         track = TRACK_ZH.get(d.get("track", ""), d.get("track", "投稿"))
         items.append(
             f'<li class="tba"><span class="when">未公布</span>'
-            f'<span class="what"><b>{html.escape(d.get("society",""))} · '
+            f'<span class="what"><b>{html.escape(society_label(d.get("society","")))} · '
             f'{html.escape(track)}</b>'
             f'<span>{html.escape(d.get("note") or d.get("cycle") or "")[:70]}</span></span>'
             f'<span class="left">—</span></li>')
@@ -438,6 +474,7 @@ def conference_cards(rows: list[dict], today: date) -> str:
             f'href="{html.escape(r.get("source_url",""))}">'
             f'<span class="band">{band(r["society"])}'
             f'<em>{r.get("year") or ""}</em></span>'
+            f'<span class="soc-line {hue}">{html.escape(society_label(r["society"]))}</span>'
             f'<span class="card-title">{html.escape(r.get("name",""))}'
             f'{"<span class=\'done\'>已結束</span>" if past else ""}</span>'
             f'<span class="meta {hue}">{ICON_CAL}<span>{when}</span></span>'
@@ -447,12 +484,9 @@ def conference_cards(rows: list[dict], today: date) -> str:
     return '<div class="cards">' + "".join(cards) + "</div>"
 
 
-def render_html(rows: list[dict], today: date, generated: str,
-                deadlines: list[dict] | None = None) -> str:
-    nxt = next_up(rows, today)
+def season_grid(rows: list[dict], today: date) -> str:
+    """年度節奏格線：橫軸十二個月、縱軸年份。"""
     years = sorted({r["year"] for r in rows if r.get("year")})
-
-    # --- 季節格線 ---
     grid = ['<div class="grid"><div class="gridrow months"><span>月份</span>'
             + "".join(f"<span>{m}</span>" for m in MONTH_ABBR) + "</div>"]
     for y in years:
@@ -481,10 +515,24 @@ def render_html(rows: list[dict], today: date, generated: str,
 
     legend = '<p class="legend">' + "".join(
         f'<span class="{v["hue"]}">{legend_mark(k, v["hue"])}'
-        f'<em>{v["meeting"]}</em></span>'
+        f'<span class="lg-txt"><b>{k} {v.get("zh","")}</b>'
+        f'<em>{v["meeting"]}</em></span></span>'
         for k, v in SOCIETY_META.items()) + "</p>"
 
+    return "".join(grid) + legend
+
+
+def render_html(rows: list[dict], today: date, generated: str,
+                deadlines: list[dict] | None = None,
+                archive_count: int = 0) -> str:
+    nxt = next_up(rows, today)
+    years = sorted({r["year"] for r in rows if r.get("year")})
+
+    grid_html = season_grid(rows, today)
     cards_html = conference_cards(rows, today)
+    archive_link = (f'<p class="archive-link"><a href="past.html">'
+                    f'查看 {today.year} 年以前的 {archive_count} 場歷屆會議 →</a></p>'
+                    if archive_count else "")
     dl_html = deadline_section(deadlines or [], today)
 
     # --- Hero ---
@@ -532,13 +580,13 @@ def render_html(rows: list[dict], today: date, generated: str,
 
 <section style="margin-top:3rem">
   <h2>年度節奏</h2>
-  {"".join(grid)}
-  {legend}
+  {grid_html}
 </section>
 
 <section style="margin-top:3rem">
-  <h2>全部場次</h2>
+  <h2>{today.year} 年起的場次</h2>
   {cards_html}
+  {archive_link}
 </section>
 
 <footer>
@@ -571,6 +619,56 @@ def render_html(rows: list[dict], today: date, generated: str,
 """
 
 
+def render_archive(rows: list[dict], today: date, generated: str) -> str:
+    """歷屆會議封存頁。刻意做得比主頁安靜——這裡是查資料的地方，不是待辦清單。"""
+    years = sorted({r["year"] for r in rows if r.get("year")})
+    span = f"{years[0]}–{years[-1]}" if years else ""
+    return f"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>歷屆會議 — 急診國際年會追蹤</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&display=swap" rel="stylesheet">
+<style>{CSS}</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <h1>歷屆會議</h1>
+  <p class="stamp"><a href="index.html">← 回到主頁</a></p>
+</header>
+
+<section style="margin-top:2.4rem">
+  <p style="color:var(--muted);max-width:60ch">
+    {len(rows)} 場已結束的會議{f"，{span}" if span else ""}。
+    今年與之後的場次、投稿死線都在主頁。</p>
+</section>
+
+<section style="margin-top:2rem">
+  <h2>年度節奏</h2>
+  {season_grid(rows, today)}
+</section>
+
+<section style="margin-top:3rem">
+  <h2>全部歷屆場次</h2>
+  {conference_cards(rows, today)}
+</section>
+
+<footer>
+  <p>最後更新 {generated}　·　<a href="index.html">回到主頁</a></p>
+</footer>
+
+</div>
+</body>
+</html>
+"""
+
+
 def write_all(rows_raw: list[dict], outdir: Path, today: date | None = None,
               deadlines: list[dict] | None = None) -> None:
     today = today or date.today()
@@ -578,8 +676,13 @@ def write_all(rows_raw: list[dict], outdir: Path, today: date | None = None,
     deadlines = deadlines or []
     outdir.mkdir(parents=True, exist_ok=True)
     generated = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d")
+    current, archive = split_archive(rows, today)
     (outdir / "index.html").write_text(
-        render_html(rows, today, generated, deadlines), encoding="utf-8")
+        render_html(current, today, generated, deadlines, len(archive)),
+        encoding="utf-8")
+    if archive:
+        (outdir / "past.html").write_text(
+            render_archive(archive, today, generated), encoding="utf-8")
     (outdir / "conferences.ics").write_text(build_ics(rows, deadlines), encoding="utf-8")
     (outdir / "deadlines.json").write_text(
         json.dumps(deadlines, ensure_ascii=False, indent=2), encoding="utf-8")
