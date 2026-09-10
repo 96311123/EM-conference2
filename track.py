@@ -21,8 +21,8 @@ from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
-from em_conferences import scrape, SCRAPERS
-from asia_societies import scrape_asia, ASIA_SOCIETIES
+from em_conferences import scrape, scrape_acep_current, SCRAPERS
+from asia_societies import scrape_asia, scrape_tsem, ASIA_SOCIETIES
 from deadlines import collect_deadlines, days_left, Deadline
 from render import write_all
 
@@ -139,6 +139,47 @@ def classify_failures(failed: list[str], health: dict, today: date
         else:
             known.append(f"{society}：已連續 {age} 天抓不到，屬已知狀態")
     return regressions, known
+
+
+def drop_placeholders(rows: list[dict]) -> tuple[list[dict], list[str]]:
+    """
+    清掉沒有日期的佔位資料——但只在同一個學會已經有實際日期時才清。
+
+    抓不到年會時，各 parser 會放一筆「尚未公布」的佔位資料，讓你知道
+    程式有在看這個學會。問題是佔位資料沒有日期，永遠不會被判定為過期，
+    會一直佔著主頁一張卡片；等真正的日期補上來之後，兩筆會並存。
+
+    留著 date_text（例如 IFEM 只公布「JUNE 2027」）的不算佔位——
+    那是真的場次，只是日期還沒定案。
+    """
+    dated = {r["society"] for r in rows if r.get("start")}
+    kept, dropped = [], []
+    for r in rows:
+        if (r["society"] in dated and not r.get("start")
+                and not r.get("date_text")):
+            dropped.append(f'{r["society"]}：移除佔位資料「{r.get("name","")[:30]}」')
+            continue
+        kept.append(r)
+    return kept, dropped
+
+
+def fill_gaps(primary: list[dict], supplement: list[dict]) -> tuple[list[dict], list[str]]:
+    """
+    用補漏來源填主要來源沒抓到的 (學會, 年份)。
+
+    刻意只填空缺、不覆蓋：主要來源給的是完整日期區間（例如 ACEP26 是
+    10/5–10/8），補漏來源只有開始日期。拿單一天蓋掉完整區間是退步。
+    """
+    have = {(r.get("society"), r.get("year")) for r in primary}
+    added, notes = [], []
+    for r in supplement:
+        k = (r.get("society"), r.get("year"))
+        if k in have:
+            continue
+        have.add(k)
+        added.append(r)
+        notes.append(f'{r.get("society")} {r.get("year")} 由補漏來源填入')
+    return primary + added, notes
 
 
 def key(r: dict) -> str:
@@ -295,9 +336,16 @@ def main() -> int:
     if args.offline:
         merged = json.loads(Path(args.offline).read_text(encoding="utf-8"))
         deadlines, warnings, changes, dl_changes = old_dl, [], [], []
-        ok_societies = set()
+        ok_societies, gap_notes = set(), []
     else:
         fresh = [asdict(c) for c in scrape()] + [asdict(c) for c in scrape_asia()]
+        # 補漏來源依可靠度排序：ACEP 官方當屆頁給完整區間，優先於
+        # TSEM 只有開始日期的列表。fill_gaps 只填空缺，先到先得。
+        supplement = ([asdict(c) for c in scrape_acep_current()]
+                      + [asdict(c) for c in scrape_tsem()])
+        fresh, gap_notes = fill_gaps(fresh, supplement)
+        fresh, dropped = drop_placeholders(fresh)
+        gap_notes.extend(dropped)
         ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
         merged, warnings = merge_with_previous(fresh, old)
         changes = diff(merged, old)
@@ -350,6 +398,12 @@ def main() -> int:
         emit("")
     else:
         emit("與上次相同，無變動。\n")
+    if gap_notes:
+        emit("### 由補漏來源填入\n")
+        for g in gap_notes:
+            emit(f"- {g}")
+        emit("")
+
     if regressions:
         emit("### 需要修：原本抓得到，現在失敗\n")
         for w in regressions:
