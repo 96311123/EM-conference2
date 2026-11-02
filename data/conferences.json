@@ -179,20 +179,7 @@
     "country_or_state": "Germany",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
-  },
-  {
-    "society": "EUSEM",
-    "name": "European Emergency Medicine Congress (EUSEM 2026)",
-    "year": 2026,
-    "date_text": "25-27 September ",
-    "start": "2026-09-25",
-    "end": "2026-09-27",
-    "city": "Paris",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://eusemcongress.org/",
-    "note": "城市欄位靠行銷文案推測，建議人工確認"
+    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "ACEP",
@@ -351,6 +338,19 @@
     "note": ""
   },
   {
+    "society": "EUSEM",
+    "name": "European Emergency Medicine Congress (EUSEM 2026)",
+    "year": 2026,
+    "date_text": "",
+    "start": "",
+    "end": "",
+    "city": "Paris",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://eusemcongress.org/",
+    "note": "城市欄位靠行銷文案推測，建議人工確認"
+  },
+  {
     "society": "IFEM",
     "name": "26th IFEM Global Congress on Emergency Medicine",
     "year": 2027,
@@ -361,7 +361,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Malaysian College of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
+    "note": "Host: Malaysian College of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "IFEM",
@@ -374,7 +374,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
+    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果"
   },
   {
     "society": "SEMS",
