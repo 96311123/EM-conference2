@@ -94,7 +94,10 @@ def update_archive(archive: list[dict], current: list[dict],
         if r.get("society") in ok_societies and k not in live:
             r["delisted"] = True
 
-    out = list(idx.values())
+    # 已下架、又沒有任何日期的佔位資料不具歷史價值，不要永遠留在封存裡
+    # （例如 parser 曾經誤判而產生的「EUSEM 2026 日期未定」）。
+    out = [r for r in idx.values()
+           if not (r.get("delisted") and not r.get("start") and not r.get("date_text"))]
     out.sort(key=lambda r: (r.get("start") or "9999", r.get("society", "")))
     return out, added
 
