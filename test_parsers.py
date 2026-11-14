@@ -63,6 +63,12 @@ The Standard Rate Registration Deadline is 7 September 2026
 Get ready for a thrilling time in Paris! Catch you there!"""
 
 
+# 2026-11：2026 屆已結束，首頁改成宣布 2027 屆（同頁仍留有 2026 的回顧句）
+EUSEM_2027_TXT = """The EUSEM 2026 Congress was held in Paris, France, from 24 – 27 September 2026.
+EUSEM 2027 is coming to Helsinki, Finland, from 16–20 October 2027!
+Stay tuned to this website for the latest updates."""
+
+
 def show(rows):
     for r in rows:
         print(f"  {r.society:6} {str(r.year):5} {r.start or '?':10} {r.end or '?':10} "
@@ -73,6 +79,10 @@ print("ACEP"); show(parse_acep(ACEP_TXT))
 print("SAEM"); show(parse_saem(SAEM_TXT))
 print("IFEM"); show(parse_ifem(IFEM_TXT))
 print("EUSEM"); show(parse_eusem(EUSEM_TXT))
+print("EUSEM 2027"); show(parse_eusem(EUSEM_2027_TXT))
+_e = parse_eusem(EUSEM_2027_TXT)
+assert len(_e) == 1 and (_e[0].year, _e[0].start, _e[0].end, _e[0].city, _e[0].country_or_state) == \
+    (2027, "2027-10-16", "2027-10-20", "Helsinki", "Finland"), _e
 
 print("\n日期解析單元測試")
 cases = [
