@@ -115,11 +115,11 @@ def _month_from_text(text: str) -> int | None:
 
 def split_archive(rows: list[dict], today: date) -> tuple[list[dict], list[dict]]:
     """
-    主頁只放今年與之後的場次；今年一月一日以前就結束的移到封存頁。
+    主頁只放還沒結束的場次；已經結束的（包含今年稍早開完的）移到封存頁。
     沒有日期的（例如只公布月份的 IFEM 2027）一律留在主頁——那是未來的事，
     不該被當成歷史。
     """
-    cut = date(today.year, 1, 1)
+    cut = today
     current = [r for r in rows if not r["_end"] or r["_end"] >= cut]
     archive = [r for r in rows if r["_end"] and r["_end"] < cut]
     return current, archive
@@ -531,7 +531,7 @@ def render_html(rows: list[dict], today: date, generated: str,
     grid_html = season_grid(rows, today)
     cards_html = conference_cards(rows, today)
     archive_link = (f'<p class="archive-link"><a href="past.html">'
-                    f'查看 {today.year} 年以前的 {archive_count} 場歷屆會議 →</a></p>'
+                    f'查看已結束的 {archive_count} 場歷屆會議 →</a></p>'
                     if archive_count else "")
     dl_html = deadline_section(deadlines or [], today)
 
@@ -574,7 +574,7 @@ def render_html(rows: list[dict], today: date, generated: str,
 {hero}
 
 <section>
-  <h2>{today.year} 年起的場次</h2>
+  <h2>即將舉行的場次</h2>
   {cards_html}
   {archive_link}
 </section>
@@ -651,7 +651,7 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 <section style="margin-top:2.4rem">
   <p style="color:var(--muted);max-width:60ch">
     {len(rows)} 場已結束的會議{f"，{span}" if span else ""}。
-    今年與之後的場次、投稿死線都在主頁。</p>
+    尚未結束的場次與投稿死線都在主頁。</p>
 </section>
 
 <section style="margin-top:2rem">
