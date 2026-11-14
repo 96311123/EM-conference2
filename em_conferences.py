@@ -374,6 +374,29 @@ def parse_eusem(text: str) -> list[Conference]:
     年份從標題 'EUSEM Congress 2026' 取，城市多半只出現在行銷文案裡。
     """
     out = []
+
+    # 首頁宣布下一屆的句型：
+    #   "EUSEM 2027 is coming to Helsinki, Finland, from 16–20 October 2027!"
+    # 這句帶有年份、城市、國家、日期，優先採用。同一頁常常還留著
+    # "The EUSEM 2026 Congress was held in Paris ..." 的回顧句，若照舊取第一個
+    # 年份就會誤把已經結束的那屆當成「下一屆」，所以這裡要先處理。
+    word = r"[A-Z][\wÀ-ſ'\- ]{1,25}?"
+    nm = re.search(
+        rf"EUSEM\s*(\d{{4}})\s+is\s+(?:coming to|taking place in|will be held in)\s+"
+        rf"({word})(?:,\s*({word}))?,?\s+(?:from|on|between)\s+([^!\n.]{{4,60}})",
+        text)
+    if nm:
+        year = int(nm.group(1))
+        start, end, raw = parse_date_range(nm.group(4), default_year=year)
+        if start:
+            out.append(Conference(
+                society="EUSEM",
+                name=f"European Emergency Medicine Congress (EUSEM {year})",
+                year=year, date_text=raw, start=start, end=end,
+                city=nm.group(2).strip(), country_or_state=(nm.group(3) or "").strip(),
+                source_url=EUSEM_URL, note="取自 eusemcongress.org 首頁公告"))
+            return out
+
     ym = re.search(r"EUSEM\s+(?:Congress\s+)?(\d{4})", text, re.I)
     year = int(ym.group(1)) if ym else None
 
