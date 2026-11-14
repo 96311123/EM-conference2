@@ -400,6 +400,22 @@
     "delisted": false
   },
   {
+    "society": "EUSEM",
+    "name": "European Emergency Medicine Congress (EUSEM 2027)",
+    "year": 2027,
+    "date_text": "16–20 October 2027",
+    "start": "2027-10-16",
+    "end": "2027-10-20",
+    "city": "Helsinki",
+    "country_or_state": "Finland",
+    "venue": "",
+    "source_url": "https://eusemcongress.org/",
+    "note": "取自 eusemcongress.org 首頁公告",
+    "first_seen": "2026-11-14",
+    "last_seen": "2026-11-14",
+    "delisted": false
+  },
+  {
     "society": "ACEP",
     "name": "ACEP27 Scientific Assembly",
     "year": 2027,
@@ -540,22 +556,6 @@
     "source_url": "https://www.acep.org/sa/general-information/future-dates",
     "note": "",
     "first_seen": "2026-09-10",
-    "last_seen": "2026-11-09",
-    "delisted": false
-  },
-  {
-    "society": "EUSEM",
-    "name": "European Emergency Medicine Congress (EUSEM 2026)",
-    "year": 2026,
-    "date_text": "",
-    "start": "",
-    "end": "",
-    "city": "Paris",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://eusemcongress.org/",
-    "note": "城市欄位靠行銷文案推測，建議人工確認",
-    "first_seen": "2026-11-02",
     "last_seen": "2026-11-09",
     "delisted": false
   },
