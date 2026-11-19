@@ -574,7 +574,7 @@ def render_html(rows: list[dict], today: date, generated: str,
 {hero}
 
 <section>
-  <h2>即將舉行的場次</h2>
+  <h2>即將舉行的場次!!!</h2>
   {cards_html}
   {archive_link}
 </section>
