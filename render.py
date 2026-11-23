@@ -809,6 +809,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
                 f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
                 f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">'
                 f'{html.escape(it["place"])}</text></g>'
+                f'<circle cx="{it["px"]:.1f}" cy="{it["py"]:.1f}" r="13" class="m-hit"/>'
                 f'<circle cx="{it["px"]:.1f}" cy="{it["py"]:.1f}" r="5.2" class="m-pin" '
                 f'style="--c:{col}"/>'
                 f'<circle cx="{it["px"] - 1.5:.1f}" cy="{it["py"] - 1.6:.1f}" r="1.5" '
@@ -850,7 +851,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
         f'<div class="wm-tabs" role="group" aria-label="選擇年份">{"".join(tabs)}</div>'
         '</div>'
         f'<div class="wm-board">{svg}{"".join(strips)}</div>'
-        '<p class="wm-note">點地圖上的標籤或下方卡片可前往官方頁面。虛線代表日期尚未公布。</p>'
+        '<p class="wm-note">滑鼠移到圖釘上可看會議名稱、日期與地點；點圖釘或下方卡片前往官方頁面。虛線代表日期尚未公布。</p>'
         '</section>')
 
 
@@ -867,6 +868,11 @@ MAP_JS = """
     box.querySelector('.wm-year').textContent = y;
   }
   btns.forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.year); }); });
+  // SVG 沒有 z-index：滑到哪個圖釘，就把它移到最上層，標籤卡才不會被別的圖釘壓住
+  box.querySelectorAll('.m-item').forEach(function(a){
+    function lift(){ if(a.parentNode.lastElementChild !== a) a.parentNode.appendChild(a); }
+    a.addEventListener('mouseenter', lift); a.addEventListener('focus', lift);
+  });
 })();
 """
 
@@ -898,7 +904,12 @@ MAP_CSS = """
 .m-s{font-size:10.5px; fill:#26333b}
 .m-pin{fill:#d9ab33; stroke:#6e5414; stroke-width:1.2}
 .m-pin-hi{fill:#fff6d6; opacity:.85; pointer-events:none}
-.m-item:hover .m-card,.m-item:focus .m-card{fill:#fff; stroke:#13222a; stroke-width:1.2}
+/* 平常只顯示圖釘；滑鼠移到圖釘（或鍵盤聚焦）才顯示標籤卡 */
+.m-callout,.m-lead{opacity:0; pointer-events:none; transition:opacity .12s}
+.m-item:hover .m-callout,.m-item:hover .m-lead,
+.m-item:focus .m-callout,.m-item:focus .m-lead{opacity:1}
+.m-item:hover .m-pin,.m-item:focus .m-pin{fill:#f3c94a; stroke-width:1.8}
+.m-hit{fill:transparent; cursor:pointer}
 .m-item:focus{outline:none}
 .ms-strip{display:flex; gap:.9rem; margin-top:.9rem; align-items:stretch}
 .ms-strip[hidden]{display:none}
