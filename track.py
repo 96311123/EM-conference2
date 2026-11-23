@@ -155,6 +155,10 @@ def apply_manual(rows: list[dict]) -> tuple[list[dict], list[str]]:
     改版而消失，也不需要等 parser 修好。
 
     同一個 (學會, 年份) 若爬蟲也抓到了，以人工這筆為準。
+
+    例外是標了 "tentative": true 的暫定場次（例如 SSEM、SEMS ASM 下一屆
+    還沒公布）：它只負責「先佔一張卡片」，讓主頁不會因為下一屆未公布就
+    整個學會消失。爬蟲一旦抓到該年有確切日期的場次，暫定這筆就自動讓位。
     """
     if not MANUAL.exists():
         return rows, []
@@ -163,10 +167,18 @@ def apply_manual(rows: list[dict]) -> tuple[list[dict], list[str]]:
     except json.JSONDecodeError as exc:
         return rows, [f"manual.json 格式錯誤，已略過：{exc}"]
 
-    keys = {(m.get("society"), m.get("year")) for m in manual}
+    scraped_dated = {(r.get("society"), r.get("year")) for r in rows if r.get("start")}
+    firm = [m for m in manual if not m.get("tentative")]
+    tentative = [m for m in manual if m.get("tentative")
+                 and (m.get("society"), m.get("year")) not in scraped_dated]
+
+    keys = {(m.get("society"), m.get("year")) for m in firm + tentative}
     kept = [r for r in rows if (r.get("society"), r.get("year")) not in keys]
-    notes = [f'{m.get("society")} {m.get("year")}：使用人工指定的資料' for m in manual]
-    return kept + manual, notes
+    notes = [f'{m.get("society")} {m.get("year")}：使用人工指定的資料' for m in firm]
+    notes += [f'{m.get("society")} {m.get("year")}：下一屆未公布，顯示暫定場次'
+              for m in tentative]
+    tagged = [dict(m, manual=True) for m in firm + tentative]
+    return kept + tagged, notes
 
 
 def drop_placeholders(rows: list[dict]) -> tuple[list[dict], list[str]]:
@@ -223,16 +235,33 @@ def load_previous() -> list[dict]:
     return []
 
 
-def merge_with_previous(new: list[dict], old: list[dict]) -> tuple[list[dict], list[str]]:
-    """某學會這次沒抓到任何資料時，沿用舊資料並標記。"""
+def merge_with_previous(new: list[dict], old: list[dict],
+                        got: set[str] | None = None) -> tuple[list[dict], list[str]]:
+    """
+    某學會這次沒抓到任何資料時，沿用舊資料並標記。
+
+    got 是「爬蟲這次真的有回應」的學會，要在套用 manual.json 之前算好：
+    人工指定的資料不算有抓到，否則 IFEM 爬取失敗時，只因 manual.json
+    有一筆 IFEM 2027，就會把 IFEM 2028 等其他舊資料一起丟掉。
+    """
     warnings = []
-    got = {r["society"] for r in new if r.get("name") != "(fetch failed)"}
+    if got is None:
+        got = {r["society"] for r in new
+               if r.get("name") != "(fetch failed)" and not r.get("manual")}
     merged = [r for r in new if r.get("name") != "(fetch failed)"]
+    have = {(r["society"], r.get("year")) for r in merged}
     for society in list(SCRAPERS) + ASIA_SOCIETIES:
         if society in got:
             continue
-        carried = [dict(r, note=(r.get("note", "") + " ｜ 本次擷取失敗，沿用上次結果").strip(" ｜"))
-                   for r in old if r["society"] == society]
+        # 標記只加一次：連續失敗時不要每週再疊一段同樣的字。
+        tag = "本次擷取失敗，沿用上次結果"
+        carried = []
+        for r in old:
+            if r["society"] != society or (r["society"], r.get("year")) in have:
+                continue
+            parts = [p.strip() for p in (r.get("note") or "").split("｜")
+                     if p.strip() and p.strip() != tag]
+            carried.append(dict(r, note=" ｜ ".join(parts + [tag])))
         if carried:
             merged.extend(carried)
             warnings.append(f"{society}：本次沒抓到資料，已沿用上次的 {len(carried)} 筆")
@@ -386,12 +415,12 @@ def main() -> int:
         supplement = ([asdict(c) for c in scrape_acep_current()]
                       + [asdict(c) for c in scrape_tsem()])
         fresh, gap_notes = fill_gaps(fresh, supplement)
+        ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
         fresh, manual_notes = apply_manual(fresh)
         gap_notes.extend(manual_notes)
         fresh, dropped = drop_placeholders(fresh)
         gap_notes.extend(dropped)
-        ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
-        merged, warnings = merge_with_previous(fresh, old)
+        merged, warnings = merge_with_previous(fresh, old, ok_societies)
         try:
             deadlines = [asdict(d) for d in collect_deadlines()]
         except Exception as exc:

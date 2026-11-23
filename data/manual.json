@@ -16,13 +16,54 @@
     "society": "HKCEM",
     "name": "Scientific Symposium on Emergency Medicine (SSEM 2026)",
     "year": 2026,
-    "date_text": "30 October 2026",
+    "date_text": "30-31 October 2026",
     "start": "2026-10-30",
-    "end": "2026-10-30",
+    "end": "2026-10-31",
     "city": "Hong Kong",
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ssem.hk/index",
-    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表"
+    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表與 HKSCCM 公告"
+  },
+  {
+    "society": "IFEM",
+    "name": "26th IFEM Global Congress on Emergency Medicine (IFEM2027)",
+    "year": 2027,
+    "date_text": "June 10-14, 2027",
+    "start": "2027-06-10",
+    "end": "2027-06-14",
+    "city": "Kuala Lumpur",
+    "country_or_state": "Malaysia",
+    "venue": "",
+    "source_url": "https://www.ifem.cc/ifem2027",
+    "note": "人工確認；IFEM 官網活動頁 ifem.cc/ifem2027 已公布日期與城市，about_congress 頁只寫 JUNE 2027"
+  },
+  {
+    "society": "HKCEM",
+    "name": "Scientific Symposium on Emergency Medicine (SSEM 2027)",
+    "year": 2027,
+    "date_text": "2027 年 10 月（預計，日期未公布）",
+    "start": "",
+    "end": "",
+    "city": "Hong Kong",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ssem.hk/index",
+    "tentative": true,
+    "note": "暫定場次：SSEM 每年十月底舉行，2027 年日期尚未公布。爬蟲一抓到正式日期就會自動取代這筆。"
+  },
+  {
+    "society": "SEMS",
+    "name": "SEMS Annual Scientific Meeting 2027",
+    "year": 2027,
+    "date_text": "2027 年 2 月（預計，日期未公布）",
+    "start": "",
+    "end": "",
+    "city": "Singapore",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://sems-online.com/category/sems-asm/",
+    "tentative": true,
+    "note": "暫定場次：SEMS ASM 兩年一次（2023、2025 皆在二月），2027 年日期尚未公布。爬蟲一抓到正式日期就會自動取代這筆。"
   }
 ]

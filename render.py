@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -86,9 +87,15 @@ def _d(s: str) -> date | None:
 
 def prepare(rows: list[dict]) -> list[dict]:
     """補上排序鍵、月份、是否已過期。無確切日期者用 date_text 的月份估位。"""
+    # 同一個 (學會, 年份) 已經有確切日期時，丟掉沒有日期的那筆。
+    # 例如 IFEM 2027 先只公布「JUNE 2027」，後來補上 6/10–14；或暫定的
+    # SSEM 2027 被正式日期取代。封存檔只進不出，兩筆都還在，這裡要擇一。
+    dated = {(r.get("society"), r.get("year")) for r in rows if _d(r.get("start", ""))}
     out = []
     for r in rows:
         if r.get("name") == "(fetch failed)":
+            continue
+        if not _d(r.get("start", "")) and (r.get("society"), r.get("year")) in dated:
             continue
         start, end = _d(r.get("start", "")), _d(r.get("end", ""))
         month = start.month if start else _month_from_text(r.get("date_text", ""))
@@ -107,6 +114,9 @@ def _month_from_text(text: str) -> int | None:
     names = ["jan", "feb", "mar", "apr", "may", "jun",
              "jul", "aug", "sep", "oct", "nov", "dec"]
     low = (text or "").lower()
+    m = re.search(r"(\d{1,2})\s*月", low)          # 「2027 年 10 月（預計）」
+    if m and 1 <= int(m.group(1)) <= 12:
+        return int(m.group(1))
     for i, n in enumerate(names, start=1):
         if n in low:
             return i
@@ -120,8 +130,16 @@ def split_archive(rows: list[dict], today: date) -> tuple[list[dict], list[dict]
     不該被當成歷史。
     """
     cut = today
-    current = [r for r in rows if not r["_end"] or r["_end"] >= cut]
-    archive = [r for r in rows if r["_end"] and r["_end"] < cut]
+
+    def ended(r: dict) -> bool:
+        if r["_end"]:
+            return r["_end"] < cut
+        # 沒有日期、但年份已經過去的暫定場次（例如一直沒公布的 SEMS ASM），
+        # 不該永遠掛在主頁上。
+        return bool(r.get("year")) and r["year"] < today.year
+
+    current = [r for r in rows if not ended(r)]
+    archive = [r for r in rows if ended(r)]
     return current, archive
 
 
@@ -323,6 +341,7 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .card .meta svg{flex:0 0 auto; width:.9rem; height:.9rem; margin-top:.22rem}
 .card .meta .place{color:var(--ink)}
 .card.past{opacity:.5}
+.card.tba .band{border-style:dashed; border-color:#9aa9b0}
 .card .done{font-size:.72rem; border:1px solid var(--rule); padding:0 .3rem;
   margin-left:.4rem; color:var(--muted); font-weight:400}
 .card.past .band img{filter:grayscale(1)}
@@ -469,14 +488,17 @@ def conference_cards(rows: list[dict], today: date) -> str:
         else:
             when = html.escape(r.get("date_text") or "日期未定")
         place = ", ".join(x for x in (r.get("city"), r.get("country_or_state")) if x) or "地點未定"
+        tba = "" if r["_confirmed"] else " tba"
+        tag = ("<span class='done'>暫定</span>" if r.get("tentative")
+               else ("<span class='done'>日期未定</span>" if tba else ""))
         cards.append(
-            f'<a class="card{" past" if past else ""}" '
+            f'<a class="card{" past" if past else ""}{tba}" '
             f'href="{html.escape(r.get("source_url",""))}">'
             f'<span class="band">{band(r["society"])}'
             f'<em>{r.get("year") or ""}</em></span>'
             f'<span class="soc-line {hue}">{html.escape(society_label(r["society"]))}</span>'
             f'<span class="card-title">{html.escape(r.get("name",""))}'
-            f'{"<span class=\'done\'>已結束</span>" if past else ""}</span>'
+            f'{"<span class=\'done\'>已結束</span>" if past else tag}</span>'
             f'<span class="meta {hue}">{ICON_CAL}<span>{when}</span></span>'
             f'<span class="meta {hue}">{ICON_PIN}'
             f'<span class="place">{html.escape(place)}</span></span>'
@@ -522,6 +544,398 @@ def season_grid(rows: list[dict], today: date) -> str:
     return "".join(grid) + legend
 
 
+# --------------------------------------------------------------------------
+# 世界地圖（頁首）
+# --------------------------------------------------------------------------
+# 仿照「Explore the World」那面軟木板：深色世界地圖、金色圖釘、白色標籤卡
+# 拉一條線指到城市，底部再列一排當年場次。一次只顯示一個年份，可切換。
+#
+# 底圖與投影參數在 world_map.py（由 Natural Earth 產生）；這裡只負責把
+# 城市經緯度換成圖上座標，以及替標籤找一個不互相重疊的位置。
+
+import math
+
+from world_map import W as MAP_W, H as MAP_H, LAT_TOP, COUNTRIES_PATH
+
+# 城市座標（緯度, 經度）。查不到的城市會退回國家／州的位置；
+# 兩者都查不到就不放圖釘，但底部清單照樣列出。新的主辦城市出現時加在這裡。
+CITY_COORDS = {
+    "san francisco": (37.77, -122.42), "boston": (42.36, -71.06),
+    "chicago": (41.88, -87.63), "austin": (30.27, -97.74),
+    "las vegas": (36.17, -115.14), "philadelphia": (39.95, -75.17),
+    "dallas": (32.78, -96.80), "new orleans": (29.95, -90.07),
+    "denver": (39.74, -104.99), "seattle": (47.61, -122.33),
+    "washington": (38.91, -77.04), "san diego": (32.72, -117.16),
+    "orlando": (28.54, -81.38), "phoenix": (33.45, -112.07),
+    "atlanta": (33.75, -84.39), "new york": (40.71, -74.01),
+    "salt lake city": (40.76, -111.89), "anaheim": (33.84, -117.91),
+    "helsinki": (60.17, 24.94), "barcelona": (41.39, 2.17),
+    "vienna": (48.21, 16.37), "copenhagen": (55.68, 12.57),
+    "lisbon": (38.72, -9.14), "prague": (50.08, 14.44),
+    "amsterdam": (52.37, 4.90), "glasgow": (55.86, -4.25),
+    "berlin": (52.52, 13.40), "hamburg": (53.55, 9.99),
+    "budapest": (47.50, 19.04), "athens": (37.98, 23.73),
+    "rome": (41.90, 12.50), "madrid": (40.42, -3.70),
+    "paris": (48.86, 2.35), "london": (51.51, -0.13),
+    "manchester": (53.48, -2.24), "dublin": (53.35, -6.26),
+    "stockholm": (59.33, 18.07), "oslo": (59.91, 10.75),
+    "kuala lumpur": (3.14, 101.69), "singapore": (1.35, 103.82),
+    "hong kong": (22.32, 114.17), "taipei": (25.03, 121.57),
+    "seoul": (37.57, 126.98), "tokyo": (35.68, 139.69),
+    "bangkok": (13.76, 100.50), "manila": (14.60, 120.98),
+    "bali": (-8.65, 115.22), "jakarta": (-6.21, 106.85),
+    "dubai": (25.20, 55.27), "abu dhabi": (24.45, 54.38),
+    "montreal": (45.50, -73.57), "toronto": (43.65, -79.38),
+    "vancouver": (49.28, -123.12), "halifax": (44.65, -63.58),
+    "melbourne": (-37.81, 144.96), "sydney": (-33.87, 151.21),
+    "brisbane": (-27.47, 153.03), "perth": (-31.95, 115.86),
+    "auckland": (-36.85, 174.76), "cape town": (-33.92, 18.42),
+    "rio de janeiro": (-22.91, -43.17), "sao paulo": (-23.55, -46.63),
+    "são paulo": (-23.55, -46.63), "buenos aires": (-34.60, -58.38),
+    "mexico city": (19.43, -99.13),
+}
+COUNTRY_COORDS = {
+    "malaysia": (3.14, 101.69), "brazil": (-12.0, -50.0),
+    "singapore": (1.35, 103.82), "hong kong": (22.32, 114.17),
+    "finland": (61.9, 25.7), "germany": (51.2, 10.4), "spain": (40.4, -3.7),
+    "austria": (47.5, 14.6), "denmark": (56.0, 10.0), "portugal": (39.6, -8.0),
+    "italy": (42.8, 12.6), "france": (46.6, 2.4), "netherlands": (52.2, 5.3),
+    "united kingdom": (53.0, -1.5), "uk": (53.0, -1.5), "ireland": (53.3, -7.7),
+    "canada": (56.0, -100.0), "australia": (-25.3, 133.8), "japan": (36.2, 138.3),
+    "korea": (36.5, 127.8), "taiwan": (23.7, 121.0), "thailand": (15.0, 101.0),
+    "uae": (24.0, 54.0), "united arab emirates": (24.0, 54.0),
+    "usa": (39.8, -98.6), "united states": (39.8, -98.6),
+}
+
+US_STATES = {
+    "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il",
+    "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt",
+    "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri",
+    "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy", "dc",
+    "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+    "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho",
+    "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine",
+    "maryland", "massachusetts", "michigan", "minnesota", "mississippi",
+    "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey",
+    "new mexico", "new york", "north carolina", "north dakota", "ohio",
+    "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina",
+    "south dakota", "tennessee", "texas", "utah", "vermont", "virginia",
+    "washington", "west virginia", "wisconsin", "wyoming",
+}
+
+SOCIETY_HEX = {"ACEP": "#9d3a2e", "SAEM": "#2f6a56", "IFEM": "#8a6820",
+               "EUSEM": "#33518c", "ASEM": "#5c4b8a", "HKCEM": "#a8562b",
+               "SEMS": "#1f6f78"}
+
+CONTINENTS = [("NORTH AMERICA", 47, -103), ("SOUTH AMERICA", -33, -66),
+              ("EUROPE", 52, 18), ("AFRICA", 6, 20), ("ASIA", 54, 92),
+              ("OCEANIA", -26, 134)]
+
+MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def project(lat: float, lon: float) -> tuple[float, float]:
+    """與 world_map.py 相同的等距長方投影。"""
+    x = (lon + 180) / 360 * MAP_W
+    y = (LAT_TOP - lat) / 360 * MAP_W
+    return x, y
+
+
+def coords_for(r: dict) -> tuple[float, float] | None:
+    city = (r.get("city") or "").strip().lower()
+    region = (r.get("country_or_state") or "").strip().lower()
+    if city in CITY_COORDS:
+        return CITY_COORDS[city]
+    if city in COUNTRY_COORDS:
+        return COUNTRY_COORDS[city]
+    if region in COUNTRY_COORDS:
+        return COUNTRY_COORDS[region]
+    return None
+
+
+def map_place(r: dict) -> str:
+    """『Boston, USA』『Kuala Lumpur, Malaysia』這種短地名。"""
+    city = (r.get("city") or "").strip()
+    region = (r.get("country_or_state") or "").strip()
+    if region.lower() in US_STATES:
+        region = "USA"
+    if region and region.lower() != city.lower():
+        return f"{city}, {region}" if city else region
+    return city or "Location TBA"
+
+
+def map_when(r: dict) -> str:
+    """『May 18 – 21, 2027』；日期未定時寫『June 2027 (date TBA)』。"""
+    s, e = r["_start"], r["_end"]
+    if s and e:
+        if s == e:
+            return f"{MON[s.month-1]} {s.day}, {s.year}"
+        if s.month == e.month:
+            return f"{MON[s.month-1]} {s.day} – {e.day}, {s.year}"
+        return f"{MON[s.month-1]} {s.day} – {MON[e.month-1]} {e.day}, {e.year}"
+    m = r.get("_month")
+    return f"{MON[m-1]} {r.get('year')} (date TBA)" if m else f"{r.get('year')} (date TBA)"
+
+
+def _text_w(s: str, size: float) -> float:
+    """估計文字寬度（SVG 沒有排版引擎可問）。CJK 一字算一個字寬。"""
+    w = 0.0
+    for ch in s:
+        w += size * (1.0 if ord(ch) > 0x2E80 else (0.36 if ch in " ,.'()–-" else 0.6))
+    return w
+
+
+def _overlap(a, b, pad=4.0) -> bool:
+    return not (a[0] + a[2] + pad <= b[0] or b[0] + b[2] + pad <= a[0] or
+                a[1] + a[3] + pad <= b[1] or b[1] + b[3] + pad <= a[1])
+
+
+def place_labels(items: list[dict], obstacles: list[tuple]) -> None:
+    """
+    替每張標籤卡找位置：在圖釘四周依距離由近到遠試，挑第一個不出界、
+    不壓到其他標籤或圖釘的位置。找不到就退而求其次，選重疊最少的。
+    就地寫入 item["box"] = (x, y, w, h)。
+    """
+    pins = [(it["px"] - 7, it["py"] - 7, 14, 14) for it in items]
+    placed: list[tuple] = []
+    # 擠在一起的圖釘先排（例如吉隆坡、新加坡、香港），它們的選擇最少。
+    def crowd(it):
+        return -sum(1 for o in items if o is not it and
+                    abs(o["px"] - it["px"]) < 160 and abs(o["py"] - it["py"]) < 90)
+    for it in sorted(items, key=crowd):
+        w, h, px, py = it["w"], it["h"], it["px"], it["py"]
+        cands = []
+        for d in (22, 45, 75, 110, 150, 200):
+            for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1), (-1, 0), (1, 0),
+                           (0, -1), (0, 1)):
+                x = px + (d if dx > 0 else (-w - d if dx < 0 else -w / 2))
+                y = py + (d * .6 if dy > 0 else (-h - d * .6 if dy < 0 else -h / 2))
+                cands.append((x, y))
+        best, best_bad = None, None
+        for x, y in cands:
+            box = (x, y, w, h)
+            if x < 6 or y < 6 or x + w > MAP_W - 6 or y + h > MAP_H - 6:
+                continue
+            bad = sum(_overlap(box, o) for o in placed + obstacles + pins)
+            if bad == 0:
+                best = box
+                break
+            if best_bad is None or bad < best_bad[0]:
+                best_bad = (bad, box)
+        it["box"] = best or (best_bad[1] if best_bad else
+                             (min(max(px - w / 2, 6), MAP_W - w - 6), 6, w, h))
+        placed.append(it["box"])
+
+
+def _leader_end(box, px, py) -> tuple[float, float]:
+    x, y, w, h = box
+    return min(max(px, x), x + w), min(max(py, y), y + h)
+
+
+ICON_CAL_SVG = ('<symbol id="mi-cal" viewBox="0 0 16 16"><g fill="none" stroke="#3b4650" '
+                'stroke-width="1.6"><rect x="1.8" y="3.2" width="12.4" height="11" rx="1"/>'
+                '<path d="M1.8 6.6h12.4M5 1.8v2.6M11 1.8v2.6"/></g></symbol>')
+ICON_PIN_SVG = ('<symbol id="mi-pin" viewBox="0 0 16 16"><path d="M8 15s5.2-4.8 5.2-8.6A5.2 '
+                '5.2 0 0 0 2.8 6.4C2.8 10.2 8 15 8 15Z" fill="#1d2b35"/>'
+                '<circle cx="8" cy="6.3" r="2" fill="#fff"/></symbol>')
+
+
+def world_map_section(rows: list[dict], today: date) -> str:
+    years = sorted({r["year"] for r in rows if r.get("year") and r["year"] >= today.year})
+    if not years:
+        return ""
+    nxt = next_up(rows, today)
+    default = nxt["year"] if nxt else years[0]
+
+    cont = []
+    obstacles = []
+    for name, lat, lon in CONTINENTS:
+        x, y = project(lat, lon)
+        tw = _text_w(name, 10.5)
+        cont.append(f'<text x="{x:.1f}" y="{y:.1f}" class="m-cont" '
+                    f'text-anchor="middle">{name}</text>'
+                    f'<line x1="{x - tw/2:.1f}" x2="{x + tw/2:.1f}" y1="{y + 3:.1f}" '
+                    f'y2="{y + 3:.1f}" class="m-cont-ul"/>')
+        obstacles.append((x - tw / 2, y - 10, tw, 14))
+
+    groups, strips, tabs = [], [], []
+    for y in years:
+        in_year = sorted([r for r in rows if r.get("year") == y],
+                         key=lambda r: (r["_month"] or 13, r["_start"] or date.max))
+        items = []
+        for r in in_year:
+            c = coords_for(r)
+            if not c:
+                continue
+            px, py = project(*c)
+            title = f'{r["society"]} {y}'
+            when, place = map_when(r), map_place(r)
+            w = max(_text_w(title, 14) + 4, _text_w(when, 10.5) + 17,
+                    _text_w(place, 10.5) + 17) + 22
+            items.append({"r": r, "px": px, "py": py, "w": w, "h": 56,
+                          "title": title, "when": when, "place": place})
+        # 同城市同年的圖釘稍微錯開，免得疊成一顆
+        seen = {}
+        for it in items:
+            k = (round(it["px"]), round(it["py"]))
+            n = seen.get(k, 0)
+            it["px"] += n * 7
+            seen[k] = n + 1
+        place_labels(items, obstacles)
+
+        g = []
+        for it in items:
+            r, (bx, by, bw, bh) = it["r"], it["box"]
+            col = SOCIETY_HEX.get(r["society"], "#555")
+            lx, ly = _leader_end(it["box"], it["px"], it["py"])
+            tba = "" if r["_confirmed"] else " m-tba"
+            href = html.escape(r.get("source_url") or "#")
+            g.append(
+                f'<a href="{href}" class="m-item{tba}">'
+                f'<title>{html.escape(r.get("name",""))}</title>'
+                f'<line x1="{it["px"]:.1f}" y1="{it["py"]:.1f}" x2="{lx:.1f}" y2="{ly:.1f}" '
+                f'class="m-lead"/>'
+                f'<g class="m-callout">'
+                f'<rect x="{bx:.1f}" y="{by:.1f}" width="{bw:.1f}" height="{bh}" rx="4" '
+                f'class="m-card"/>'
+                f'<rect x="{bx + 7:.1f}" y="{by + 8:.1f}" width="4" height="15" rx="1" '
+                f'fill="{col}"/>'
+                f'<text x="{bx + 16:.1f}" y="{by + 21:.1f}" class="m-t">'
+                f'{html.escape(it["title"])}</text>'
+                f'<use href="#mi-cal" x="{bx + 16:.1f}" y="{by + 27.5:.1f}" width="9" height="9"/>'
+                f'<text x="{bx + 29:.1f}" y="{by + 35.5:.1f}" class="m-s">'
+                f'{html.escape(it["when"])}</text>'
+                f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
+                f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">'
+                f'{html.escape(it["place"])}</text></g>'
+                f'<circle cx="{it["px"]:.1f}" cy="{it["py"]:.1f}" r="5.2" class="m-pin" '
+                f'style="--c:{col}"/>'
+                f'<circle cx="{it["px"] - 1.5:.1f}" cy="{it["py"] - 1.6:.1f}" r="1.5" '
+                f'class="m-pin-hi"/></a>')
+        hidden = "" if y == default else " hidden"
+        groups.append(f'<g class="m-year" data-year="{y}"{hidden}>{"".join(g)}</g>')
+
+        cells = []
+        for r in in_year:
+            hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
+            tba = "" if r["_confirmed"] else " tba"
+            cells.append(
+                f'<a class="ms-cell{tba}" href="{html.escape(r.get("source_url") or "#")}" '
+                f'style="--c:var(--{hue})">'
+                f'<b>{html.escape(r["society"])} {y}</b>'
+                f'<span>{ICON_PIN}{html.escape(map_place(r))}</span>'
+                f'<span>{ICON_CAL}{html.escape(map_when(r))}</span></a>')
+        strips.append(
+            f'<div class="ms-strip" data-year="{y}"{hidden}>'
+            f'<div class="ms-flag">{ICON_CAL}<span>Upcoming <br>EM Conferences'
+            f'<b>{y}</b></span></div>'
+            f'<div class="ms-cells">{"".join(cells)}</div></div>')
+        tabs.append(f'<button type="button" data-year="{y}" '
+                    f'aria-pressed="{"true" if y == default else "false"}">{y}</button>')
+
+    svg = (f'<svg class="m-svg" viewBox="0 0 {MAP_W} {MAP_H:.0f}" role="img" '
+           f'aria-label="全球急診醫學會議地圖">'
+           f'<defs>{ICON_CAL_SVG}{ICON_PIN_SVG}'
+           f'<filter id="m-shadow" x="-10%" y="-10%" width="120%" height="140%">'
+           f'<feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-opacity=".28"/>'
+           f'</filter></defs>'
+           f'<path d="{COUNTRIES_PATH}" class="m-land"/>'
+           f'{"".join(cont)}{"".join(groups)}</svg>')
+
+    return (
+        '<section class="worldmap" aria-labelledby="wm-title">'
+        '<div class="wm-head">'
+        f'<h2 id="wm-title">全球急診醫學會議地圖 <span class="wm-year">{default}</span></h2>'
+        f'<div class="wm-tabs" role="group" aria-label="選擇年份">{"".join(tabs)}</div>'
+        '</div>'
+        f'<div class="wm-board">{svg}{"".join(strips)}</div>'
+        '<p class="wm-note">點地圖上的標籤或下方卡片可前往官方頁面。虛線代表日期尚未公布。</p>'
+        '</section>')
+
+
+MAP_JS = """
+(function(){
+  var box = document.querySelector('.worldmap');
+  if(!box) return;
+  var btns = box.querySelectorAll('.wm-tabs button');
+  function show(y){
+    box.querySelectorAll('[data-year]').forEach(function(el){
+      if(el.tagName === 'BUTTON'){ el.setAttribute('aria-pressed', el.dataset.year === y); return; }
+      if(el.dataset.year === y) el.removeAttribute('hidden'); else el.setAttribute('hidden','');
+    });
+    box.querySelector('.wm-year').textContent = y;
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.year); }); });
+})();
+"""
+
+MAP_CSS = """
+/* 世界地圖 */
+.worldmap{margin:2.2rem 0 2.6rem}
+.wm-head{display:flex; justify-content:space-between; align-items:flex-end; gap:1rem;
+  flex-wrap:wrap; border-bottom:1px solid var(--rule); margin-bottom:1rem; padding-bottom:.35rem}
+.worldmap h2{border:0; margin:0; padding:0; font-size:1.35rem; letter-spacing:.02em}
+.wm-tabs{display:flex; gap:.3rem; flex-wrap:wrap}
+.wm-tabs button{font:inherit; font-size:.82rem; padding:.18rem .6rem; cursor:pointer;
+  border:1px solid var(--rule); background:var(--surface); color:var(--muted); border-radius:2px}
+.wm-tabs button[aria-pressed="true"]{background:#1d3550; border-color:#1d3550; color:#fff}
+.wm-board{background:#b0a497; border-radius:14px; padding:1.1rem 1.1rem 1.2rem;
+  background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.3px),
+    radial-gradient(rgba(0,0,0,.07) 1px,transparent 1.3px);
+  background-size:5px 5px,7px 7px; background-position:0 0,2px 3px;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08), 0 2px 10px rgba(19,34,42,.12);
+  font-family:"Inter","Helvetica Neue",Arial,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+.m-svg{display:block; width:100%; height:auto}
+.m-year[hidden]{display:none}
+.m-land{fill:#1e262d; stroke:#b0a497; stroke-width:.55; stroke-linejoin:round}
+.m-cont{font-size:10.5px; font-weight:600; fill:#f4efe8; letter-spacing:.03em}
+.m-cont-ul{stroke:#f4efe8; stroke-width:.8}
+.m-lead{stroke:#fbf8f3; stroke-width:1.3}
+.m-card{fill:#fbfaf7; filter:url(#m-shadow)}
+.m-tba .m-card{stroke:#7a858c; stroke-dasharray:4 3; stroke-width:1}
+.m-t{font-size:14px; font-weight:700; fill:#13222a}
+.m-s{font-size:10.5px; fill:#26333b}
+.m-pin{fill:#d9ab33; stroke:#6e5414; stroke-width:1.2}
+.m-pin-hi{fill:#fff6d6; opacity:.85; pointer-events:none}
+.m-item:hover .m-card,.m-item:focus .m-card{fill:#fff; stroke:#13222a; stroke-width:1.2}
+.m-item:focus{outline:none}
+.ms-strip{display:flex; gap:.9rem; margin-top:.9rem; align-items:stretch}
+.ms-strip[hidden]{display:none}
+.ms-flag{flex:0 0 auto; display:flex; align-items:center; gap:.6rem; color:#fff;
+  background:#1d3550; padding:.6rem 1.6rem .6rem .9rem; font-size:.82rem; line-height:1.2;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%);
+  border-radius:6px 0 0 6px}
+.ms-flag svg{width:1.7rem; height:1.7rem; stroke:#fff}
+.ms-flag b{display:block; font-size:1.55rem; font-weight:700; margin-top:.1rem}
+.ms-cells{flex:1; display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  background:#fbfaf7; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.ms-cell{display:block; padding:.55rem .8rem .6rem; text-decoration:none; color:#13222a;
+  border-left:1px solid #ddd6cc; min-width:0}
+.ms-cell:first-child{border-left:0}
+.ms-cell b{display:block; font-size:.95rem; font-weight:700; padding-left:.55rem;
+  border-left:4px solid var(--c); margin-bottom:.25rem; line-height:1.15}
+.ms-cell span{display:flex; align-items:center; gap:.35rem; font-size:.78rem; color:#33414a;
+  line-height:1.3; margin-top:.12rem}
+.ms-cell span svg{flex:0 0 auto; width:.8rem; height:.8rem}
+.ms-cell.tba span:last-child{font-style:italic; color:#5f6a71}
+.ms-cell:hover b{text-decoration:underline}
+.wm-note{font-size:.78rem; color:var(--muted); margin:.5rem 0 0}
+@media (max-width:700px){
+  .wm-board{padding:.6rem; border-radius:10px}
+  .m-callout,.m-lead{display:none}
+  .m-pin{r:9}
+  .m-cont{display:none} .m-cont-ul{display:none}
+  .ms-strip{flex-direction:column}
+  .ms-flag{clip-path:none; border-radius:6px; padding:.5rem .8rem}
+  .ms-flag b{display:inline; font-size:1.1rem; margin-left:.3rem}
+  .ms-flag br{display:none}
+  .ms-cell{border-left:0; border-top:1px solid #ddd6cc}
+  .ms-cell:first-child{border-top:0}
+}
+"""
+
+
 def render_html(rows: list[dict], today: date, generated: str,
                 deadlines: list[dict] | None = None,
                 archive_count: int = 0) -> str:
@@ -534,6 +948,7 @@ def render_html(rows: list[dict], today: date, generated: str,
                     f'查看已結束的 {archive_count} 場歷屆會議 →</a></p>'
                     if archive_count else "")
     dl_html = deadline_section(deadlines or [], today)
+    map_html = world_map_section(rows, today)
 
     # --- Hero ---
     if nxt:
@@ -561,7 +976,7 @@ def render_html(rows: list[dict], today: date, generated: str,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&display=swap" rel="stylesheet">
-<style>{CSS}</style>
+<style>{CSS}{MAP_CSS}</style>
 </head>
 <body>
 <div class="wrap">
@@ -570,6 +985,8 @@ def render_html(rows: list[dict], today: date, generated: str,
   <h1>急診國際年會追蹤</h1>
   <p class="stamp">最後更新 {generated}</p>
 </header>
+
+{map_html}
 
 {hero}
 
@@ -618,6 +1035,7 @@ def render_html(rows: list[dict], today: date, generated: str,
   el.querySelector('b').textContent = days > 0 ? days : 0;
   if (days <= 0) el.innerHTML = '<b>進行中</b>';
 }})();
+{MAP_JS}
 </script>
 </body>
 </html>
