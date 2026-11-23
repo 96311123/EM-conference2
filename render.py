@@ -59,6 +59,22 @@ def meeting_code(code: str) -> str:
     return MEETING_CODE.get(code, code)
 
 
+def display_name(r: dict) -> str:
+    """
+    完整會議名稱。IFEM 的會議在名稱後補上『(ICEM 2027)』；官網名稱裡若已有
+    『(IFEM2027)』這種括號簡稱，就直接換成 ICEM，不重複加。
+    """
+    name = r.get("name", "") or ""
+    mc = meeting_code(r.get("society", ""))
+    if mc == r.get("society") or not r.get("year"):
+        return name
+    tag = f"({mc} {r['year']})"
+    pat = re.compile(r"\(\s*" + re.escape(r["society"]) + r"\s*" + str(r["year"]) + r"\s*\)")
+    if pat.search(name):
+        return pat.sub(tag, name)
+    return f"{name} {tag}" if tag not in name else name
+
+
 def society_label(code: str) -> str:
     """『SEMS 新加坡急診』這種並排標示，中英文都給；IFEM 顯示成『ICEM · IFEM 國際…』。"""
     zh = zh_name(code)
@@ -219,7 +235,7 @@ def build_ics(rows: list[dict], deadlines: list[dict] | None = None) -> str:
             f"DTSTAMP:{stamp}",
             f'DTSTART;VALUE=DATE:{r["_start"].strftime("%Y%m%d")}',
             f'DTEND;VALUE=DATE:{dtend.strftime("%Y%m%d")}',
-            f'SUMMARY:{esc(meeting_code(r["society"]) + " — " + r.get("name", ""))}',
+            f'SUMMARY:{esc(meeting_code(r["society"]) + " — " + display_name(r))}',
             f"LOCATION:{esc(place)}",
             f"DESCRIPTION:{desc}",
             f'URL:{r.get("source_url","")}',
@@ -514,7 +530,7 @@ def conference_cards(rows: list[dict], today: date) -> str:
             f'<span class="band">{band(r["society"])}'
             f'<em>{r.get("year") or ""}</em></span>'
             f'<span class="soc-line {hue}">{html.escape(society_label(r["society"]))}</span>'
-            f'<span class="card-title">{html.escape(r.get("name",""))}'
+            f'<span class="card-title">{html.escape(display_name(r))}'
             f'{"<span class=\'done\'>已結束</span>" if past else tag}</span>'
             f'<span class="meta {hue}">{ICON_CAL}<span>{when}</span></span>'
             f'<span class="meta {hue}">{ICON_PIN}'
@@ -545,7 +561,7 @@ def season_grid(rows: list[dict], today: date) -> str:
             cells.append(
                 f'<div class="bar {hue}{past}{tba}" '
                 f'style="grid-column:{m + 1};grid-row:{lanes[_key(r)] + 1}" '
-                f'title="{html.escape(r.get("name",""))}">'
+                f'title="{html.escape(display_name(r))}">'
                 f'<b>{html.escape(meeting_code(r["society"]))}</b>'
                 f'<span>{html.escape(when)}</span>'
                 f'<span>{html.escape(place)}</span></div>')
@@ -870,7 +886,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
             href = html.escape(r.get("source_url") or "#")
             g.append(
                 f'<a href="{href}" class="m-item{tba}">'
-                f'<title>{html.escape(r.get("name",""))}</title>'
+                f'<title>{html.escape(display_name(r))}</title>'
                 f'<line x1="{it["px"]:.1f}" y1="{it["py"]:.1f}" x2="{lx:.1f}" y2="{ly:.1f}" '
                 f'class="m-lead"/>'
                 f'<g class="m-callout">'
@@ -1044,7 +1060,7 @@ def render_html(rows: list[dict], today: date, generated: str,
         hero = (
             '<section class="hero">'
             '<p class="lede">下一場</p>'
-            f'<p class="title">{html.escape(nxt.get("name", ""))}</p>'
+            f'<p class="title">{html.escape(display_name(nxt))}</p>'
             f'<p class="meta">{nxt["_start"].isoformat()} – {nxt["_end"].isoformat()}'
             f'{"　·　" + html.escape(place) if place else ""}</p>'
             f'<p class="count" data-start="{nxt["_start"].isoformat()}">'
