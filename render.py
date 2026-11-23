@@ -49,10 +49,22 @@ def zh_name(code: str) -> str:
     return SOCIETY_META.get(code, {}).get("zh", "")
 
 
+# 會議本身的簡稱跟學會不同時，畫面上以會議簡稱為主。
+# IFEM 主辦的世界大會一般稱 ICEM（International Conference on Emergency Medicine）。
+MEETING_CODE = {"IFEM": "ICEM"}
+
+
+def meeting_code(code: str) -> str:
+    """地圖、年度條、時間軸上用的會議簡稱：IFEM → ICEM，其餘不變。"""
+    return MEETING_CODE.get(code, code)
+
+
 def society_label(code: str) -> str:
-    """『SEMS 新加坡急診』這種並排標示，中英文都給。"""
+    """『SEMS 新加坡急診』這種並排標示，中英文都給；IFEM 顯示成『ICEM · IFEM 國際…』。"""
     zh = zh_name(code)
-    return f"{code} {zh}" if zh else code
+    base = f"{code} {zh}" if zh else code
+    mc = meeting_code(code)
+    return f"{mc} · {base}" if mc != code else base
 
 
 
@@ -207,7 +219,7 @@ def build_ics(rows: list[dict], deadlines: list[dict] | None = None) -> str:
             f"DTSTAMP:{stamp}",
             f'DTSTART;VALUE=DATE:{r["_start"].strftime("%Y%m%d")}',
             f'DTEND;VALUE=DATE:{dtend.strftime("%Y%m%d")}',
-            f'SUMMARY:{esc(r["society"] + " — " + r.get("name", ""))}',
+            f'SUMMARY:{esc(meeting_code(r["society"]) + " — " + r.get("name", ""))}',
             f"LOCATION:{esc(place)}",
             f"DESCRIPTION:{desc}",
             f'URL:{r.get("source_url","")}',
@@ -534,7 +546,7 @@ def season_grid(rows: list[dict], today: date) -> str:
                 f'<div class="bar {hue}{past}{tba}" '
                 f'style="grid-column:{m + 1};grid-row:{lanes[_key(r)] + 1}" '
                 f'title="{html.escape(r.get("name",""))}">'
-                f'<b>{html.escape(r["society"])}</b>'
+                f'<b>{html.escape(meeting_code(r["society"]))}</b>'
                 f'<span>{html.escape(when)}</span>'
                 f'<span>{html.escape(place)}</span></div>')
         grid.append('<div class="gridrow">' + "".join(cells) + "</div>")
@@ -831,7 +843,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
             if not c:
                 continue
             px, py = project(*c)
-            title = f'{r["society"]} {y}'
+            title = f'{meeting_code(r["society"])} {y}'
             when, place = map_when(r), map_place(r)
             w = max(_text_w(title, 14) + 4, _text_w(when, 10.5) + 17,
                     _text_w(place, 10.5) + 17) + 22
@@ -885,7 +897,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
             cells.append(
                 f'<a class="ms-cell{tba}" href="{html.escape(r.get("source_url") or "#")}" '
                 f'style="--c:var(--{hue})">'
-                f'<b>{html.escape(r["society"])} {y}</b>'
+                f'<b>{html.escape(meeting_code(r["society"]))} {y}</b>'
                 f'<span>{ICON_PIN}{html.escape(map_place(r))}</span>'
                 f'<span>{ICON_CAL}{html.escape(map_when(r))}</span></a>')
         strips.append(
