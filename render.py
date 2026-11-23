@@ -91,9 +91,14 @@ def prepare(rows: list[dict]) -> list[dict]:
     # 例如 IFEM 2027 先只公布「JUNE 2027」，後來補上 6/10–14；或暫定的
     # SSEM 2027 被正式日期取代。封存檔只進不出，兩筆都還在，這裡要擇一。
     dated = {(r.get("society"), r.get("year")) for r in rows if _d(r.get("start", ""))}
+    # 官網改期時（例如 ASEM 2028 從 10/20–25 改成 11/6–8），舊日期在封存檔裡
+    # 會被標成 delisted。同一 (學會, 年份) 還有現行資料時，舊的那筆就不要再顯示。
+    listed = {(r.get("society"), r.get("year")) for r in rows if not r.get("delisted")}
     out = []
     for r in rows:
         if r.get("name") == "(fetch failed)":
+            continue
+        if r.get("delisted") and (r.get("society"), r.get("year")) in listed:
             continue
         if not _d(r.get("start", "")) and (r.get("society"), r.get("year")) in dated:
             continue
@@ -728,6 +733,40 @@ def place_labels(items: list[dict], obstacles: list[tuple]) -> None:
         placed.append(it["box"])
 
 
+FLAG_W, FLAG_H = 44, 28
+
+
+def place_flags(items: list[dict]) -> list[tuple]:
+    """
+    每顆圖釘插一支小旗子，旗面是學會 logo。旗子預設朝右、旗桿 40 高；
+    跟已經插好的旗子打架時（例如吉隆坡和新加坡只差幾公分），改朝左或
+    把旗桿拉高。就地寫入 item["flag"] = (朝向, 旗桿高)，回傳所有旗面框，
+    讓標籤卡避開。
+    """
+    boxes: list[tuple] = []
+    for it in sorted(items, key=lambda i: i["px"]):
+        px, py = it["px"], it["py"]
+        choice = None
+        for ph in (40, 70, 100, 130):
+            for side in (1, -1):
+                x = px + 0.8 if side > 0 else px - 0.8 - FLAG_W
+                box = (x, py - ph, FLAG_W, FLAG_H)      # 只看旗面；旗桿很細，交錯無妨
+                if x < 2 or x + FLAG_W > MAP_W - 2 or py - ph < 2:
+                    continue
+                if not any(_overlap(box, b, pad=3) for b in boxes):
+                    choice = (side, ph, box)
+                    break
+            if choice:
+                break
+        if not choice:
+            side = 1 if px + FLAG_W < MAP_W else -1
+            x = px + 0.8 if side > 0 else px - 0.8 - FLAG_W
+            choice = (side, 40, (x, py - 40, FLAG_W, FLAG_H))
+        it["flag"] = choice[:2]
+        boxes.append(choice[2])
+    return boxes
+
+
 def _leader_end(box, px, py) -> tuple[float, float]:
     x, y, w, h = box
     return min(max(px, x), x + w), min(max(py, y), y + h)
@@ -741,6 +780,29 @@ ICON_PIN_SVG = ('<symbol id="mi-pin" viewBox="0 0 16 16"><path d="M8 15s5.2-4.8 
                 '<circle cx="8" cy="6.3" r="2" fill="#fff"/></symbol>')
 
 
+def flag_svg(it: dict, r: dict, col: str) -> str:
+    """旗桿＋旗面（白底、學會色框、logo）。"""
+    side, ph = it["flag"]
+    px, py = it["px"], it["py"]
+    fx = px + 0.8 if side > 0 else px - 0.8 - FLAG_W
+    fy = py - ph
+    hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
+    if hue in HAS_LOGO:
+        face = (f'<image href="assets/{hue}.png" x="{fx + 3:.1f}" y="{fy + 3:.1f}" '
+                f'width="{FLAG_W - 6}" height="{FLAG_H - 6}" '
+                f'preserveAspectRatio="xMidYMid meet"/>')
+    else:
+        face = (f'<text x="{fx + FLAG_W / 2:.1f}" y="{fy + FLAG_H / 2 + 3.5:.1f}" '
+                f'text-anchor="middle" class="m-flag-txt" fill="{col}">'
+                f'{html.escape(r["society"])}</text>')
+    return (f'<g class="m-flag" style="transform-origin:{px:.1f}px {py:.1f}px">'
+            f'<ellipse cx="{px:.1f}" cy="{py + 0.6:.1f}" rx="4" ry="1.6" class="m-base"/>'
+            f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{px:.1f}" y2="{fy - 1.5:.1f}" class="m-pole"/>'
+            f'<circle cx="{px:.1f}" cy="{fy - 2:.1f}" r="1.8" class="m-knob"/>'
+            f'<rect x="{fx:.1f}" y="{fy:.1f}" width="{FLAG_W}" height="{FLAG_H}" rx="1.5" '
+            f'class="m-flagface" style="stroke:{col}"/>{face}</g>')
+
+
 def world_map_section(rows: list[dict], today: date) -> str:
     years = sorted({r["year"] for r in rows if r.get("year") and r["year"] >= today.year})
     if not years:
@@ -749,15 +811,15 @@ def world_map_section(rows: list[dict], today: date) -> str:
     default = nxt["year"] if nxt else years[0]
 
     cont = []
-    obstacles = []
     for name, lat, lon in CONTINENTS:
         x, y = project(lat, lon)
         tw = _text_w(name, 10.5)
-        cont.append(f'<text x="{x:.1f}" y="{y:.1f}" class="m-cont" '
-                    f'text-anchor="middle">{name}</text>'
-                    f'<line x1="{x - tw/2:.1f}" x2="{x + tw/2:.1f}" y1="{y + 3:.1f}" '
-                    f'y2="{y + 3:.1f}" class="m-cont-ul"/>')
-        obstacles.append((x - tw / 2, y - 10, tw, 14))
+        cont.append(((x - tw / 2, y - 10, tw, 14),
+                     f'<text x="{x:.1f}" y="{y:.1f}" class="m-cont" '
+                     f'text-anchor="middle">{name}</text>'
+                     f'<line x1="{x - tw/2:.1f}" x2="{x + tw/2:.1f}" y1="{y + 3:.1f}" '
+                     f'y2="{y + 3:.1f}" class="m-cont-ul"/>'))
+    obstacles: list[tuple] = []
 
     groups, strips, tabs = [], [], []
     for y in years:
@@ -782,9 +844,12 @@ def world_map_section(rows: list[dict], today: date) -> str:
             n = seen.get(k, 0)
             it["px"] += n * 7
             seen[k] = n + 1
-        place_labels(items, obstacles)
+        flag_boxes = place_flags(items)
+        place_labels(items, obstacles + flag_boxes)
 
-        g = []
+        # 大洲名稱是背景資訊：被旗子蓋到就不畫
+        g = [svg for box, svg in cont
+             if not any(_overlap(box, fb, pad=2) for fb in flag_boxes)]
         for it in items:
             r, (bx, by, bw, bh) = it["r"], it["box"]
             col = SOCIETY_HEX.get(r["society"], "#555")
@@ -809,11 +874,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
                 f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
                 f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">'
                 f'{html.escape(it["place"])}</text></g>'
-                f'<circle cx="{it["px"]:.1f}" cy="{it["py"]:.1f}" r="13" class="m-hit"/>'
-                f'<circle cx="{it["px"]:.1f}" cy="{it["py"]:.1f}" r="5.2" class="m-pin" '
-                f'style="--c:{col}"/>'
-                f'<circle cx="{it["px"] - 1.5:.1f}" cy="{it["py"] - 1.6:.1f}" r="1.5" '
-                f'class="m-pin-hi"/></a>')
+                f'{flag_svg(it, r, col)}</a>')
         hidden = "" if y == default else " hidden"
         groups.append(f'<g class="m-year" data-year="{y}"{hidden}>{"".join(g)}</g>')
 
@@ -842,7 +903,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
            f'<feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-opacity=".28"/>'
            f'</filter></defs>'
            f'<path d="{COUNTRIES_PATH}" class="m-land"/>'
-           f'{"".join(cont)}{"".join(groups)}</svg>')
+           f'{"".join(groups)}</svg>')
 
     return (
         '<section class="worldmap" aria-labelledby="wm-title">'
@@ -851,7 +912,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
         f'<div class="wm-tabs" role="group" aria-label="選擇年份">{"".join(tabs)}</div>'
         '</div>'
         f'<div class="wm-board">{svg}{"".join(strips)}</div>'
-        '<p class="wm-note">滑鼠移到圖釘上可看會議名稱、日期與地點；點圖釘或下方卡片前往官方頁面。虛線代表日期尚未公布。</p>'
+        '<p class="wm-note">滑鼠移到旗子上可看會議名稱、日期與地點；點旗子或下方卡片前往官方頁面。虛線代表日期尚未公布。</p>'
         '</section>')
 
 
@@ -868,7 +929,7 @@ MAP_JS = """
     box.querySelector('.wm-year').textContent = y;
   }
   btns.forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.year); }); });
-  // SVG 沒有 z-index：滑到哪個圖釘，就把它移到最上層，標籤卡才不會被別的圖釘壓住
+  // SVG 沒有 z-index：滑到哪支旗子，就把它移到最上層，標籤卡才不會被別的旗子壓住
   box.querySelectorAll('.m-item').forEach(function(a){
     function lift(){ if(a.parentNode.lastElementChild !== a) a.parentNode.appendChild(a); }
     a.addEventListener('mouseenter', lift); a.addEventListener('focus', lift);
@@ -902,14 +963,18 @@ MAP_CSS = """
 .m-tba .m-card{stroke:#7a858c; stroke-dasharray:4 3; stroke-width:1}
 .m-t{font-size:14px; font-weight:700; fill:#13222a}
 .m-s{font-size:10.5px; fill:#26333b}
-.m-pin{fill:#d9ab33; stroke:#6e5414; stroke-width:1.2}
-.m-pin-hi{fill:#fff6d6; opacity:.85; pointer-events:none}
+.m-pole{stroke:#e9e2d6; stroke-width:1.6}
+.m-knob{fill:#d9ab33; stroke:#6e5414; stroke-width:.6}
+.m-base{fill:rgba(0,0,0,.45)}
+.m-flagface{fill:#fff; stroke-width:1.8; filter:url(#m-shadow)}
+.m-flag-txt{font-size:10px; font-weight:700}
+.m-flag{cursor:pointer; transition:transform .12s}
 /* 平常只顯示圖釘；滑鼠移到圖釘（或鍵盤聚焦）才顯示標籤卡 */
 .m-callout,.m-lead{opacity:0; pointer-events:none; transition:opacity .12s}
 .m-item:hover .m-callout,.m-item:hover .m-lead,
 .m-item:focus .m-callout,.m-item:focus .m-lead{opacity:1}
-.m-item:hover .m-pin,.m-item:focus .m-pin{fill:#f3c94a; stroke-width:1.8}
-.m-hit{fill:transparent; cursor:pointer}
+.m-item:hover .m-flag,.m-item:focus .m-flag{transform:scale(1.25)}
+.m-item:hover .m-flagface,.m-item:focus .m-flagface{stroke-width:2.6}
 .m-item:focus{outline:none}
 .ms-strip{display:flex; gap:.9rem; margin-top:.9rem; align-items:stretch}
 .ms-strip[hidden]{display:none}
@@ -935,7 +1000,7 @@ MAP_CSS = """
 @media (max-width:700px){
   .wm-board{padding:.6rem; border-radius:10px}
   .m-callout,.m-lead{display:none}
-  .m-pin{r:9}
+  .m-flag{transform:scale(1.6)}
   .m-cont{display:none} .m-cont-ul{display:none}
   .ms-strip{flex-direction:column}
   .ms-flag{clip-path:none; border-radius:6px; padding:.5rem .8rem}
