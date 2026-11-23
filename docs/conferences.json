@@ -330,7 +330,7 @@
     "country_or_state": "Germany",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果",
+    "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果",
     "first_seen": "2026-09-10",
     "last_seen": "2026-11-23",
     "delisted": false
@@ -496,6 +496,22 @@
     "note": "ACEM 兩年一次",
     "first_seen": "2026-09-10",
     "last_seen": "2026-11-23",
+    "delisted": true
+  },
+  {
+    "society": "ASEM",
+    "name": "14th Asian Conference on Emergency Medicine",
+    "year": 2028,
+    "date_text": "6 - 8 November 2028",
+    "start": "2028-11-06",
+    "end": "2028-11-08",
+    "city": "Singapore",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.asiansem.org/events-and-sponsorship",
+    "note": "ACEM 兩年一次",
+    "first_seen": "2026-11-23",
+    "last_seen": "2026-11-23",
     "delisted": false
   },
   {
@@ -623,7 +639,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果",
+    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果",
     "first_seen": "2026-09-10",
     "last_seen": "2026-11-23",
     "delisted": false
