@@ -110,9 +110,20 @@ def legend_mark(code: str, hue: str) -> str:
     return f"<b>{html.escape(code)}</b>"
 
 
+# 橫式 logo 圖檔不完整時，改用「圖示＋網頁文字」排版，避免文字被切掉。
+# AHA 提供的 ReSS 橫式圖右側被截斷（只到 "Resuscitation Scie"）。
+CARD_LOCKUP = {
+    "aha": ("aha-flag.png", "American Heart Association", "Resuscitation Science Symposium"),
+}
+
+
 def band(society: str) -> str:
     """卡片頂端：有 logo 就放圖，沒有就放學會縮寫色塊。"""
     hue = SOCIETY_META.get(society, {}).get("hue", "")
+    if hue in CARD_LOCKUP:
+        img, top, main = CARD_LOCKUP[hue]
+        return (f'<span class="lockup {hue}"><img src="assets/{img}" alt="" loading="lazy">'
+                f'<span><small>{html.escape(top)}</small>{html.escape(main)}</span></span>')
     if hue in HAS_LOGO:
         return (f'<img src="assets/{hue}.png" alt="{html.escape(society_label(society))}" '
                 f'loading="lazy" width="360">')
@@ -390,6 +401,11 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .card .band img{max-width:100%; max-height:100%; width:auto; height:auto;
   object-fit:contain}
 .card .band b{font-size:1.35rem; font-weight:600; letter-spacing:.05em; text-align:center}
+.card .band .lockup{display:flex; align-items:center; gap:.7rem; padding:0 .4rem}
+.card .band .lockup img{height:4.2rem; width:auto; flex:0 0 auto}
+.card .band .lockup>span{display:flex; flex-direction:column; font-family:"Inter","Helvetica Neue",Arial,sans-serif;
+  font-size:1.18rem; line-height:1.12; font-weight:400; letter-spacing:-.01em}
+.card .band .lockup small{font-size:.62rem; color:#222; letter-spacing:0; margin-bottom:.2rem}
 .card .band b small{display:block; font-size:.8rem; letter-spacing:.08em; opacity:.8}
 .card .band em{position:absolute; right:.45rem; bottom:.35rem; font-style:normal;
   font-size:.72rem; color:var(--muted)}
@@ -737,7 +753,7 @@ def map_when(r: dict) -> str:
     """『May 18 – 21, 2027』；日期未定時寫『June 2027 (date TBA)』。"""
     s, e = r["_start"], r["_end"]
     if s and e:
-        tent = "" if r["_confirmed"] else " (tentative)"
+        tent = "" if r["_confirmed"] else "（暫定）"
         if s == e:
             return f"{MON[s.month-1]} {s.day}, {s.year}{tent}"
         if s.month == e.month:
