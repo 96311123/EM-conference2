@@ -935,8 +935,9 @@ def flag_svg(it: dict, r: dict, col: str) -> str:
     fy = py - ph
     hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
     if hue in HAS_LOGO:
-        img = f"{hue}-flag.png" if hue in FLAG_LOGO else f"{hue}.png"
-        face = (f'<image href="assets/{img}" x="{fx + 3:.1f}" y="{fy + 3:.1f}" '
+        # 旗面用 docs/assets/flags/ 的小圖（白底、128 色、數 KB）：原尺寸 logo 有的近
+        # 100KB，iPhone Safari 在 SVG <image> 裡常載入失敗，旗面只剩一個問號。
+        face = (f'<image href="assets/flags/{hue}.png" x="{fx + 3:.1f}" y="{fy + 3:.1f}" '
                 f'width="{FLAG_W - 6}" height="{FLAG_H - 6}" '
                 f'preserveAspectRatio="xMidYMid meet"/>')
     else:
@@ -1182,6 +1183,10 @@ ZOOM_CSS = """
 .m-zoom button:first-child{border-top:0}
 .m-zoom button:hover{background:#fff}
 .m-zoom button:focus-visible{outline:2px solid #1d3550; outline-offset:-2px}
+@media (max-width:700px){
+  .m-zoom{right:.3rem; top:auto; bottom:.3rem; opacity:.92}
+  .m-zoom button{width:1.6rem; height:1.6rem; font-size:.9rem}
+}
 """
 
 
