@@ -351,7 +351,7 @@
     "note": "Host: German Association for Emergency Medicine (DGINA) ｜ 本次擷取失敗，沿用上次結果",
     "first_seen": "2026-09-10",
     "last_seen": "2026-11-24",
-    "delisted": false
+    "delisted": true
   },
   {
     "society": "ERC",
@@ -770,7 +770,7 @@
     "note": "Host: Malaysian College of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果 ｜ 本次擷取失敗，沿用上次結果",
     "first_seen": "2026-09-10",
     "last_seen": "2026-11-19",
-    "delisted": false
+    "delisted": true
   },
   {
     "society": "IFEM",
@@ -783,8 +783,24 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果",
+    "note": "Host: Brazilian Association of Emergency Medicine (ABRAMEDE)",
     "first_seen": "2026-09-10",
+    "last_seen": "2026-11-24",
+    "delisted": false
+  },
+  {
+    "society": "IFEM",
+    "name": "28th IFEM Global Congress on Emergency Medicine",
+    "year": 2029,
+    "date_text": "JUNE 2029",
+    "start": "",
+    "end": "",
+    "city": "Ireland",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ifem.cc/about_congress",
+    "note": "Host: Irish Association for Emergency Medicine (IAEM)",
+    "first_seen": "2026-11-24",
     "last_seen": "2026-11-24",
     "delisted": false
   },
