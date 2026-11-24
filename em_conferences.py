@@ -165,8 +165,8 @@ def parse_date_range(s: str, default_year: int | None = None) -> tuple[str, str,
         return (iso(y, MONTHS[mon1[:3].lower()], int(d1)),
                 iso(y, MONTHS[mon2[:3].lower()], int(d2)), m.group(0))
 
-    # 3) 跨月（月在前）：September 28 - October 1, 2025
-    m = re.search(rf"({MONTH_RE})\s+(\d{{1,2}})\s*{DASH}\s*"
+    # 3) 跨月（月在前）：September 28 - October 1, 2025 / September 30 to October 2, 2027（ERC）
+    m = re.search(rf"({MONTH_RE})\s+(\d{{1,2}})\s*(?:to|{DASH})\s*"
                   rf"({MONTH_RE})\s+(\d{{1,2}}),?\s*(\d{{4}})", s, re.I)
     if m:
         mon1, d1, mon2, d2, y = m.group(1), int(m.group(2)), m.group(3), int(m.group(4)), int(m.group(5))
@@ -476,12 +476,216 @@ def eusem_via_wp_api(session: requests.Session | None = None) -> list[Conference
 # --------------------------------------------------------------------------
 # 主流程
 # --------------------------------------------------------------------------
+# 復甦／急診相關年會：ERC、AHA ReSS、AAEM（2026-11 新增）
+# --------------------------------------------------------------------------
+
+ERC_URL = "https://www.erc.edu/events/congress/general-information/"
+RESS_URL = "https://professional.heart.org/en/meetings/resuscitation-science-symposium"
+# AAEM 每屆網址不同（aaem27、aaem28…），各屆網站都有 Future Scientific Assemblies 頁，
+# 列出往後兩三屆的日期、城市與飯店。依今年推算幾個候選網址，抓得到的都用上。
+AAEM_URL = "https://www.aaem.org/events-calendar/"
+AAEM_FUTURE_URL = "https://www.aaem.org/aaem{yy}/future-scientific-assemblies/"
+
+_CITY_WORD = r"[A-Z][A-Za-z.\-']+(?:\s[A-Z][A-Za-z.\-']+){0,2}"
+_COUNTRIES = ("United Kingdom", "Scotland", "Italy", "Netherlands", "Greece",
+              "Germany", "France", "Spain", "Portugal", "Belgium", "Austria",
+              "Ireland", "Denmark", "Sweden", "Norway", "Finland", "Poland",
+              "Czech Republic", "Switzerland", "Slovenia", "Croatia", "Turkey")
+_NOT_CITY = {"the", "The", "Europe", "European"} | {m.capitalize() for m in MONTHS}
+
+
+_TWO_WORD_STATES = {"New York", "New Jersey", "New Mexico", "New Hampshire", "North Carolina",
+                    "North Dakota", "South Carolina", "South Dakota", "West Virginia",
+                    "Rhode Island", "District Columbia"}
+
+
+def _state(words: str) -> str:
+    """『Massachusetts American Heart』→『Massachusetts』；『New York City』→『New York』。"""
+    w = words.split()
+    return " ".join(w[:2]) if " ".join(w[:2]) in _TWO_WORD_STATES else (w[0] if w else "")
+
+
+def _sentences(text: str) -> list[str]:
+    flat = re.sub(r"\s+", " ", text)
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+(?=[A-Z])", flat) if s.strip()]
+
+
+def parse_erc(text: str) -> list[Conference]:
+    """
+    ERC Congress「General Information」頁是敘述文字，不是表格，例如：
+        We are delighted to welcome you to the ERC Congress - Resuscitation 2027 in Glasgow!
+        ... will take place from September 30 to October 2, 2027 at the Scottish Event Campus ...
+        Resuscitation 2026, ... held in Milan from 17–19 September 2026, ...
+    以「Resuscitation 年份」為錨點，收集提到同一年的句子，從中找日期、城市與場地。
+    """
+    sents = _sentences(text)
+    years = sorted({int(y) for y in re.findall(r"Resuscitation\s+(20\d{2})", text)})
+    out = []
+    for y in years:
+        related = [s for s in sents if str(y) in s]
+        start = end = raw = city = country = venue = ""
+        for s in related:
+            if not start:
+                st, en, rw = parse_date_range(s)
+                if st and st.startswith(str(y)):
+                    start, end, raw = st, en, rw
+            if not city:
+                for m in re.finditer(rf"\bin ({_CITY_WORD})", s):
+                    cand = m.group(1).split(",")[0].strip()
+                    if cand.split()[0] not in _NOT_CITY and cand not in _COUNTRIES:
+                        city = cand
+                        break
+            if not venue:
+                m = re.search(r"\bat (?:the )?((?:[A-Z][\w']*\s){1,4}"
+                              r"(?:Campus|Centre|Center|Hall|Arena|Ahoy|Palace|Congress Center))", s)
+                if m:
+                    venue = m.group(1).strip()
+            if not country:
+                m = re.search(r"\b(" + "|".join(_COUNTRIES) + r")\b", s)
+                if m:
+                    country = m.group(1)
+        if not (start or city):
+            continue
+        out.append(Conference(
+            society="ERC", name=f"ERC Congress – Resuscitation {y}", year=y,
+            date_text=raw, start=start, end=end, city=city,
+            country_or_state=country, venue=venue, source_url=ERC_URL))
+    return out
+
+
+def parse_ress(text: str) -> list[Conference]:
+    """
+    AHA ReSS 頁面的 Key Dates 表：
+        November 7–8, 2026    Resuscitation Science Symposium 2026 in Chicago, Illinois
+    AHA 會議總覽頁則是分行：
+        Resuscitation Science Symposium 2026
+        November 7–8, 2026
+        McCormick Place Convention Center
+        Chicago, Illinois
+    兩種都吃。
+    """
+    found: dict[int, Conference] = {}
+    flat = re.sub(r"\s+", " ", text)
+    for m in re.finditer(
+            rf"((?:{MONTH_RE})\.?\s+\d{{1,2}}\s*{DASH}\s*\d{{1,2}},\s*(20\d{{2}}))\s+"
+            rf"Resuscitation Science Symposium (20\d{{2}}) in ({_CITY_WORD}),\s*"
+            rf"([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)", flat):
+        y = int(m.group(3))
+        st, en, raw = parse_date_range(m.group(1))
+        found[y] = Conference(
+            society="AHA", name=f"Resuscitation Science Symposium {y} (ReSS)", year=y,
+            date_text=raw, start=st, end=en, city=m.group(4).strip(),
+            country_or_state=_state(m.group(5)), source_url=RESS_URL)
+
+    lines = text.splitlines()
+    for i, ln in enumerate(lines):
+        m = re.match(r"^Resuscitation Science Symposium (20\d{2})\s*$", ln.strip())
+        if not m or int(m.group(1)) in found:
+            continue
+        y = int(m.group(1))
+        st = en = raw = venue = city = state = ""
+        for w in lines[i + 1:i + 5]:
+            if not st:
+                st, en, raw = parse_date_range(w)
+                continue
+            if "," in w and not has_date(w):
+                city, state = split_location(w)
+                break
+            if not venue:
+                venue = w.strip()
+        if st:
+            found[y] = Conference(
+                society="AHA", name=f"Resuscitation Science Symposium {y} (ReSS)", year=y,
+                date_text=raw, start=st, end=en, city=city, country_or_state=state,
+                venue=venue, source_url=RESS_URL)
+    return sorted(found.values(), key=lambda c: c.year or 0)
+
+
+def parse_aaem(text: str, source_url: str = AAEM_URL) -> list[Conference]:
+    """
+    AAEM 各屆網站的 Future Scientific Assemblies 頁：
+        33rd Annual Scientific Assembly (AAEM27)
+        April 25-29, 2027 | San Antonio, TX | San Antonio Marriott Rivercenter on the River Walk
+    也吃活動頁的敘述句：
+        ... (AAEM27) ... taking place April 25-29, 2027, in San Antonio, Texas.
+    """
+    found: dict[int, Conference] = {}
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    for i, ln in enumerate(lines):
+        m = re.search(r"(\d+(?:st|nd|rd|th))\s+Annual Scientific Assembly\s*\(AAEM\s?(\d{2})\)", ln)
+        if not m:
+            continue
+        yy = int(m.group(2))
+        y = 2000 + yy
+        blob = " | ".join(lines[i:i + 4])
+        st, en, raw = parse_date_range(blob, default_year=y)
+        if not st or not st.startswith(str(y)):
+            continue                                    # 只有標題、日期還沒公布
+        city = state = venue = ""
+        after = blob[blob.find(raw) + len(raw):]
+        if not after.lstrip().startswith("|"):
+            continue                                    # 不是「日期 | 城市 | 場地」版型，交給下方敘述句
+        parts = [p.strip() for p in after.split("|") if p.strip()]
+        if parts and "," in parts[0]:
+            city, state = split_location(parts[0])
+            if len(parts) > 1 and "Annual Scientific Assembly" not in parts[1]:
+                venue = parts[1]
+        found[y] = Conference(
+            society="AAEM", name=f"{m.group(1)} Annual Scientific Assembly (AAEM{yy})",
+            year=y, date_text=raw, start=st, end=en, city=city,
+            country_or_state=state, venue=venue, source_url=source_url)
+
+    flat = re.sub(r"\s+", " ", text)
+    code = re.search(r"(\d+(?:st|nd|rd|th))\s+Annual(?: AAEM)? Scientific Assembly\s*\(AAEM\s?(\d{2})\)", flat)
+    m = re.search(rf"taking place ((?:{MONTH_RE})\.?\s+\d{{1,2}}\s*{DASH}\s*\d{{1,2}},\s*20\d{{2}}),?"
+                  rf"\s+in ({_CITY_WORD}),\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)", flat)
+    if m:
+        st, en, raw = parse_date_range(m.group(1))
+        y = int(st[:4]) if st else None
+        if y and y not in found:
+            ordinal = code.group(1) if code and int(code.group(2)) == y % 100 else f"{y - 1994}th"
+            found[y] = Conference(
+                society="AAEM", name=f"{ordinal} Annual Scientific Assembly (AAEM{y % 100})",
+                year=y, date_text=raw, start=st, end=en, city=m.group(2).strip(),
+                country_or_state=_state(m.group(3)), source_url=source_url)
+    return sorted(found.values(), key=lambda c: c.year or 0)
+
+
+def scrape_aaem(session: requests.Session | None = None) -> list[Conference]:
+    """
+    依今年推算 AAEM 候選網址（去年、今年、明年那屆的 Future Scientific Assemblies 頁），
+    逐一抓取、合併；同一年以有城市、有場地的那筆為準。全部失敗才丟例外。
+    """
+    s = session or requests.Session()
+    yy = date.today().year % 100
+    urls = [AAEM_FUTURE_URL.format(yy=y) for y in (yy - 1, yy, yy + 1)]
+    best: dict[int, Conference] = {}
+    errors = []
+    for i, url in enumerate(urls):
+        if i:
+            time.sleep(POLITE_DELAY)
+        try:
+            for c in parse_aaem(fetch_text(url, s), source_url=url):
+                old = best.get(c.year)
+                if not old or (bool(c.venue), bool(c.city)) > (bool(old.venue), bool(old.city)):
+                    best[c.year] = c
+        except Exception as exc:
+            errors.append(f"{url}: {type(exc).__name__}")
+    if not best and errors:
+        raise RuntimeError("; ".join(errors))
+    return sorted(best.values(), key=lambda c: c.year or 0)
+
+
+# --------------------------------------------------------------------------
 
 SCRAPERS: dict[str, tuple[str, Callable[[str], list[Conference]]]] = {
     "ACEP": (ACEP_URL, parse_acep),
     "SAEM": (SAEM_URL, parse_saem),
     "IFEM": (IFEM_URL, parse_ifem),
     "EUSEM": (EUSEM_URL, parse_eusem),
+    "ERC": (ERC_URL, parse_erc),
+    "AHA": (RESS_URL, parse_ress),
+    "AAEM": (AAEM_URL, parse_aaem),
 }
 
 
@@ -500,6 +704,9 @@ def scrape(only: Iterable[str] | None = None) -> list[Conference]:
                 if api:
                     results.extend(api)
                     continue
+            if society == "AAEM":                     # 多個候選網址，另外處理
+                results.extend(scrape_aaem(session))
+                continue
             text = fetch_text(url, session)
             got = parser(text)
             if not got:

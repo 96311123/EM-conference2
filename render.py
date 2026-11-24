@@ -39,9 +39,19 @@ SOCIETY_META = {
     "HKCEM": {"full": "Hong Kong College of Emergency Medicine",
               "zh": "香港急症科醫學院",
               "meeting": "學術活動", "hue": "hkcem"},
+    "ERC":   {"full": "European Resuscitation Council",
+              "zh": "歐洲復甦委員會",
+              "meeting": "ERC Congress – Resuscitation", "hue": "erc"},
+    "AHA":   {"full": "American Heart Association",
+              "zh": "美國心臟協會",
+              "meeting": "Resuscitation Science Symposium（ReSS）", "hue": "aha"},
+    "AAEM":  {"full": "American Academy of Emergency Medicine",
+              "zh": "美國急診醫學學會",
+              "meeting": "Annual Scientific Assembly", "hue": "aaem"},
 }
 
-# 七個學會都有 logo 圖檔了
+# 有 logo 圖檔（docs/assets/<hue>.png）的學會；ERC、AHA、AAEM 暫用文字徽章，
+# 之後把 logo 放進 docs/assets 並加到這裡即可。
 HAS_LOGO = {"acep", "saem", "ifem", "eusem", "asem", "sems", "hkcem"}
 
 
@@ -51,7 +61,8 @@ def zh_name(code: str) -> str:
 
 # 會議本身的簡稱跟學會不同時，畫面上以會議簡稱為主。
 # IFEM 主辦的世界大會一般稱 ICEM（International Conference on Emergency Medicine）。
-MEETING_CODE = {"IFEM": "ICEM"}
+# AHA 的復甦年會一般稱 ReSS（Resuscitation Science Symposium）。
+MEETING_CODE = {"IFEM": "ICEM", "AHA": "ReSS"}
 
 
 def meeting_code(code: str) -> str:
@@ -72,7 +83,9 @@ def display_name(r: dict) -> str:
     pat = re.compile(r"\(\s*" + re.escape(r["society"]) + r"\s*" + str(r["year"]) + r"\s*\)")
     if pat.search(name):
         return pat.sub(tag, name)
-    return f"{name} {tag}" if tag not in name else name
+    if mc in name:                     # 例如『… Symposium 2027 (ReSS)』已經有簡稱
+        return name
+    return f"{name} {tag}"
 
 
 def society_label(code: str) -> str:
@@ -96,7 +109,9 @@ def band(society: str) -> str:
     if hue in HAS_LOGO:
         return (f'<img src="assets/{hue}.png" alt="{html.escape(society_label(society))}" '
                 f'loading="lazy" width="360">')
-    return f'<b class="{hue}">{html.escape(society)}</b>'
+    mc = meeting_code(society)
+    sub = f'<small>{html.escape(mc)}</small>' if mc != society else ""
+    return f'<b class="{hue}">{html.escape(society)}{sub}</b>'
 
 MONTH_ABBR = ["一", "二", "三", "四", "五", "六",
               "七", "八", "九", "十", "十一", "十二"]
@@ -290,6 +305,7 @@ CSS = """
   --rule:#c6d1d6; --rule-soft:#dde5e8;
   --acep:#9d3a2e; --saem:#2f6a56; --ifem:#8a6820; --eusem:#33518c;
   --asem:#5c4b8a; --hkcem:#a8562b; --sems:#1f6f78;
+  --erc:#2b74ad; --aha:#c4283c; --aaem:#5f6f1c;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -341,6 +357,7 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .acep{color:var(--acep)} .saem{color:var(--saem)}
 .ifem{color:var(--ifem)} .eusem{color:var(--eusem)}
 .asem{color:var(--asem)} .hkcem{color:var(--hkcem)} .sems{color:var(--sems)}
+.erc{color:var(--erc)} .aha{color:var(--aha)} .aaem{color:var(--aaem)}
 .yearband{grid-column:1/-1; height:1px; background:var(--rule-soft); margin:.25rem 0}
 
 .legend{display:flex; gap:.6rem 1.4rem; flex-wrap:wrap; margin:1rem 0 0; font-size:.8rem}
@@ -361,7 +378,8 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
   border:1px solid var(--rule); background:#fff}
 .card .band img{max-width:100%; max-height:100%; width:auto; height:auto;
   object-fit:contain}
-.card .band b{font-size:1.35rem; font-weight:600; letter-spacing:.05em}
+.card .band b{font-size:1.35rem; font-weight:600; letter-spacing:.05em; text-align:center}
+.card .band b small{display:block; font-size:.8rem; letter-spacing:.08em; opacity:.8}
 .card .band em{position:absolute; right:.45rem; bottom:.35rem; font-style:normal;
   font-size:.72rem; color:var(--muted)}
 .card .soc-line{display:block; font-size:.76rem; font-weight:600;
@@ -622,7 +640,9 @@ CITY_COORDS = {
     "vancouver": (49.28, -123.12), "halifax": (44.65, -63.58),
     "melbourne": (-37.81, 144.96), "sydney": (-33.87, 151.21),
     "brisbane": (-27.47, 153.03), "perth": (-31.95, 115.86),
-    "auckland": (-36.85, 174.76), "cape town": (-33.92, 18.42),
+    "auckland": (-36.85, 174.76), "san antonio": (29.42, -98.49),
+    "fort lauderdale": (26.12, -80.14), "milan": (45.46, 9.19),
+    "rotterdam": (51.92, 4.48), "edinburgh": (55.95, -3.19), "cape town": (-33.92, 18.42),
     "rio de janeiro": (-22.91, -43.17), "sao paulo": (-23.55, -46.63),
     "são paulo": (-23.55, -46.63), "buenos aires": (-34.60, -58.38),
     "mexico city": (19.43, -99.13),
@@ -658,7 +678,8 @@ US_STATES = {
 
 SOCIETY_HEX = {"ACEP": "#9d3a2e", "SAEM": "#2f6a56", "IFEM": "#8a6820",
                "EUSEM": "#33518c", "ASEM": "#5c4b8a", "HKCEM": "#a8562b",
-               "SEMS": "#1f6f78"}
+               "SEMS": "#1f6f78", "ERC": "#2b74ad", "AHA": "#c4283c",
+               "AAEM": "#5f6f1c"}
 
 CONTINENTS = [("NORTH AMERICA", 47, -103), ("SOUTH AMERICA", -33, -66),
               ("EUROPE", 52, 18), ("AFRICA", 6, 20), ("ASIA", 54, 92),
@@ -775,7 +796,7 @@ def place_flags(items: list[dict]) -> list[tuple]:
     for it in sorted(items, key=lambda i: i["px"]):
         px, py = it["px"], it["py"]
         choice = None
-        for ph in (40, 70, 100, 130):
+        for ph in (40, 74, 108, 142):          # 每階高出一面旗＋間隙
             for side in (1, -1):
                 x = px + 0.8 if side > 0 else px - 0.8 - FLAG_W
                 box = (x, py - ph, FLAG_W, FLAG_H)      # 只看旗面；旗桿很細，交錯無妨

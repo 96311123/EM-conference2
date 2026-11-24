@@ -168,14 +168,18 @@ def apply_manual(rows: list[dict]) -> tuple[list[dict], list[str]]:
         return rows, [f"manual.json 格式錯誤，已略過：{exc}"]
 
     scraped_dated = {(r.get("society"), r.get("year")) for r in rows if r.get("start")}
-    firm = [m for m in manual if not m.get("tentative")]
-    tentative = [m for m in manual if m.get("tentative")
+    # tentative（暫定場次）與 fallback（爬蟲被擋時的備援，例如 AHA、ERC 官網）
+    # 都只補空缺：爬蟲有抓到該年確切日期，就以爬蟲為準。
+    gap_fill = lambda m: m.get("tentative") or m.get("fallback")
+    firm = [m for m in manual if not gap_fill(m)]
+    tentative = [m for m in manual if gap_fill(m)
                  and (m.get("society"), m.get("year")) not in scraped_dated]
 
     keys = {(m.get("society"), m.get("year")) for m in firm + tentative}
     kept = [r for r in rows if (r.get("society"), r.get("year")) not in keys]
     notes = [f'{m.get("society")} {m.get("year")}：使用人工指定的資料' for m in firm]
-    notes += [f'{m.get("society")} {m.get("year")}：下一屆未公布，顯示暫定場次'
+    notes += [f'{m.get("society")} {m.get("year")}：'
+              + ("下一屆未公布，顯示暫定場次" if m.get("tentative") else "爬蟲未取得，使用備援資料")
               for m in tentative]
     tagged = [dict(m, manual=True) for m in firm + tentative]
     return kept + tagged, notes
