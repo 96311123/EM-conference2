@@ -665,12 +665,19 @@ def scrape_aaem(session: requests.Session | None = None) -> list[Conference]:
         if i:
             time.sleep(POLITE_DELAY)
         try:
-            for c in parse_aaem(fetch_text(url, s), source_url=url):
+            text = fetch_text(url, s)
+            got = parse_aaem(text, source_url=url)
+            if not got:
+                snippet = re.sub(r"\s+", " ", text)[:400]
+                print(f"[warn] AAEM: {url} 抓到頁面但沒解析出資料；開頭：{snippet}",
+                      file=sys.stderr)
+            for c in got:
                 old = best.get(c.year)
                 if not old or (bool(c.venue), bool(c.city)) > (bool(old.venue), bool(old.city)):
                     best[c.year] = c
         except Exception as exc:
             errors.append(f"{url}: {type(exc).__name__}")
+            print(f"[warn] AAEM: {url} → {type(exc).__name__}: {exc}", file=sys.stderr)
     if not best and errors:
         raise RuntimeError("; ".join(errors))
     return sorted(best.values(), key=lambda c: c.year or 0)
