@@ -260,21 +260,6 @@
     "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
   },
   {
-    "society": "AAEM",
-    "name": "32nd Annual Scientific Assembly (AAEM26)",
-    "year": 2026,
-    "date_text": "April 11-15, 2026",
-    "start": "2026-04-11",
-    "end": "2026-04-15",
-    "city": "Seattle",
-    "country_or_state": "WA",
-    "venue": "The Westin Seattle",
-    "source_url": "https://www.aaem.org/aaem26/",
-    "fallback": true,
-    "note": "備援資料：AAEM 官網",
-    "manual": true
-  },
-  {
     "society": "IFEM",
     "name": "25th International Conference on Emergency Medicine",
     "year": 2026,
@@ -301,34 +286,6 @@
     "note": ""
   },
   {
-    "society": "ACEP",
-    "name": "ACEP26 Scientific Assembly",
-    "year": 2026,
-    "date_text": "October 5-8, 2026",
-    "start": "2026-10-05",
-    "end": "2026-10-08",
-    "city": "Chicago",
-    "country_or_state": "Illinois",
-    "venue": "",
-    "source_url": "https://www.acep.org/acep26",
-    "note": "人工確認；ACEP 的 Future Dates 頁只列明年以後，不含當屆",
-    "manual": true
-  },
-  {
-    "society": "HKCEM",
-    "name": "Scientific Symposium on Emergency Medicine (SSEM 2026)",
-    "year": 2026,
-    "date_text": "30-31 October 2026",
-    "start": "2026-10-30",
-    "end": "2026-10-31",
-    "city": "Hong Kong",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://www.ssem.hk/index",
-    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表與 HKSCCM 公告",
-    "manual": true
-  },
-  {
     "society": "AHA",
     "name": "Resuscitation Science Symposium 2026 (ReSS)",
     "year": 2026,
@@ -344,21 +301,6 @@
     "manual": true
   },
   {
-    "society": "AAEM",
-    "name": "33rd Annual Scientific Assembly (AAEM27)",
-    "year": 2027,
-    "date_text": "April 25-29, 2027",
-    "start": "2027-04-25",
-    "end": "2027-04-29",
-    "city": "San Antonio",
-    "country_or_state": "TX",
-    "venue": "San Antonio Marriott Rivercenter on the River Walk",
-    "source_url": "https://www.aaem.org/events-calendar/33rd-annual-scientific-assembly/",
-    "fallback": true,
-    "note": "備援資料：AAEM 官網 Future Scientific Assemblies",
-    "manual": true
-  },
-  {
     "society": "SAEM",
     "name": "SAEM27 Annual Meeting",
     "year": 2027,
@@ -370,20 +312,6 @@
     "venue": "San Francisco Marriott Marquis",
     "source_url": "https://www.saem.org/meetings-and-events/future-meetings",
     "note": ""
-  },
-  {
-    "society": "IFEM",
-    "name": "26th IFEM Global Congress on Emergency Medicine (IFEM2027)",
-    "year": 2027,
-    "date_text": "June 10-14, 2027",
-    "start": "2027-06-10",
-    "end": "2027-06-14",
-    "city": "Kuala Lumpur",
-    "country_or_state": "Malaysia",
-    "venue": "",
-    "source_url": "https://www.ifem.cc/ifem2027",
-    "note": "人工確認；IFEM 官網活動頁 ifem.cc/ifem2027 已公布日期與城市，about_congress 頁只寫 JUNE 2027",
-    "manual": true
   },
   {
     "society": "ERC",
@@ -440,21 +368,6 @@
     "manual": true
   },
   {
-    "society": "AAEM",
-    "name": "34th Annual Scientific Assembly (AAEM28)",
-    "year": 2028,
-    "date_text": "April 2-6, 2028",
-    "start": "2028-04-02",
-    "end": "2028-04-06",
-    "city": "Denver",
-    "country_or_state": "CO",
-    "venue": "Sheraton Denver Downtown",
-    "source_url": "https://www.aaem.org/aaem27/future-scientific-assemblies/",
-    "fallback": true,
-    "note": "備援資料：AAEM 官網 Future Scientific Assemblies",
-    "manual": true
-  },
-  {
     "society": "SAEM",
     "name": "SAEM28 Annual Meeting",
     "year": 2028,
@@ -492,21 +405,6 @@
     "venue": "",
     "source_url": "https://www.asiansem.org/events-and-sponsorship",
     "note": "ACEM 兩年一次"
-  },
-  {
-    "society": "AAEM",
-    "name": "35th Annual Scientific Assembly (AAEM29)",
-    "year": 2029,
-    "date_text": "April 22-26, 2029",
-    "start": "2029-04-22",
-    "end": "2029-04-26",
-    "city": "Fort Lauderdale",
-    "country_or_state": "FL",
-    "venue": "Fort Lauderdale Marriott Harbor Beach Resort & Spa",
-    "source_url": "https://www.aaem.org/aaem26/future-scientific-assemblies/",
-    "fallback": true,
-    "note": "備援資料：AAEM 官網 Future Scientific Assemblies",
-    "manual": true
   },
   {
     "society": "SAEM",
@@ -574,6 +472,61 @@
     "note": ""
   },
   {
+    "society": "IFEM",
+    "name": "27th IFEM Global Congress on Emergency Medicine",
+    "year": 2028,
+    "date_text": "JUNE 2028",
+    "start": "",
+    "end": "",
+    "city": "Brazil",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ifem.cc/about_congress",
+    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果"
+  },
+  {
+    "society": "ACEP",
+    "name": "ACEP26 Scientific Assembly",
+    "year": 2026,
+    "date_text": "October 5-8, 2026",
+    "start": "2026-10-05",
+    "end": "2026-10-08",
+    "city": "Chicago",
+    "country_or_state": "Illinois",
+    "venue": "",
+    "source_url": "https://www.acep.org/acep26",
+    "note": "人工確認；ACEP 的 Future Dates 頁只列明年以後，不含當屆",
+    "manual": true
+  },
+  {
+    "society": "HKCEM",
+    "name": "Scientific Symposium on Emergency Medicine (SSEM 2026)",
+    "year": 2026,
+    "date_text": "30-31 October 2026",
+    "start": "2026-10-30",
+    "end": "2026-10-31",
+    "city": "Hong Kong",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ssem.hk/index",
+    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表與 HKSCCM 公告",
+    "manual": true
+  },
+  {
+    "society": "IFEM",
+    "name": "26th IFEM Global Congress on Emergency Medicine (IFEM2027)",
+    "year": 2027,
+    "date_text": "June 10-14, 2027",
+    "start": "2027-06-10",
+    "end": "2027-06-14",
+    "city": "Kuala Lumpur",
+    "country_or_state": "Malaysia",
+    "venue": "",
+    "source_url": "https://www.ifem.cc/ifem2027",
+    "note": "人工確認；IFEM 官網活動頁 ifem.cc/ifem2027 已公布日期與城市，about_congress 頁只寫 JUNE 2027",
+    "manual": true
+  },
+  {
     "society": "HKCEM",
     "name": "Scientific Symposium on Emergency Medicine (SSEM 2027)",
     "year": 2027,
@@ -589,19 +542,6 @@
     "manual": true
   },
   {
-    "society": "IFEM",
-    "name": "27th IFEM Global Congress on Emergency Medicine",
-    "year": 2028,
-    "date_text": "JUNE 2028",
-    "start": "",
-    "end": "",
-    "city": "Brazil",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine ｜ 本次擷取失敗，沿用上次結果"
-  },
-  {
     "society": "SEMS",
     "name": "SEMS Annual Scientific Meeting 2027",
     "year": 2027,
@@ -614,6 +554,66 @@
     "source_url": "https://sems-online.com/category/sems-asm/",
     "tentative": true,
     "note": "暫定場次：SEMS ASM 兩年一次（2023、2025 皆在二月），2027 年日期尚未公布。爬蟲一抓到正式日期就會自動取代這筆。",
+    "manual": true
+  },
+  {
+    "society": "AAEMS",
+    "name": "7th EMS Asia Conference 2025",
+    "year": 2025,
+    "date_text": "18-20 February 2025",
+    "start": "2025-02-18",
+    "end": "2025-02-20",
+    "city": "Hua Hin",
+    "country_or_state": "Thailand",
+    "venue": "Sheraton Hua Hin Resort & Spa",
+    "source_url": "https://emsasia.org/news/conference/23/Hua Hin, Thailand",
+    "fallback": true,
+    "note": "備援資料：AAEMS 官網 EMS Asia Conference 公告",
+    "manual": true
+  },
+  {
+    "society": "AAEMS",
+    "name": "8th EMS Asia Conference 2026",
+    "year": 2026,
+    "date_text": "9 to 11 November 2026",
+    "start": "2026-11-09",
+    "end": "2026-11-11",
+    "city": "Singapore",
+    "country_or_state": "",
+    "venue": "Sands Expo and Convention Centre",
+    "source_url": "https://web.cvent.com/event/a4a72514-c0f7-47fa-8cd2-77a1239151c6",
+    "fallback": true,
+    "note": "備援資料：EMS Asia 2026 官方報名頁",
+    "manual": true
+  },
+  {
+    "society": "AAEMS",
+    "name": "EMS Asia Conference 2027",
+    "year": 2027,
+    "date_text": "2027（日期、地點未公布）",
+    "start": "",
+    "end": "",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://emsasia.org/",
+    "tentative": true,
+    "note": "暫定場次：AAEMS 的 EMS Asia 下一屆尚未公布（2025 泰國華欣二月、2026 新加坡十一月）。公布後請更新本筆。",
+    "manual": true
+  },
+  {
+    "society": "TSEM",
+    "name": "台灣急診醫學會 2027 年會",
+    "year": 2027,
+    "date_text": "2027 年 6/25（五）–6/26（六）（暫定）",
+    "start": "2027-06-25",
+    "end": "2027-06-26",
+    "city": "",
+    "country_or_state": "Taiwan",
+    "venue": "",
+    "source_url": "https://www.sem.org.tw/",
+    "tentative": true,
+    "note": "暫定場次：依慣例六月最後一週週五、六舉行，正式日期與地點以學會公告為準。",
     "manual": true
   }
 ]

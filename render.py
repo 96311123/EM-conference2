@@ -45,14 +45,21 @@ SOCIETY_META = {
     "AHA":   {"full": "American Heart Association",
               "zh": "美國心臟協會",
               "meeting": "Resuscitation Science Symposium（ReSS）", "hue": "aha"},
-    "AAEM":  {"full": "American Academy of Emergency Medicine",
-              "zh": "美國急診醫學學會",
-              "meeting": "Annual Scientific Assembly", "hue": "aaem"},
+    "AAEMS": {"full": "Asian Association for Emergency Medical Services",
+              "zh": "亞洲緊急醫療救護協會",
+              "meeting": "EMS Asia Conference（院前救護）", "hue": "aaems"},
+    "TSEM":  {"full": "Taiwan Society of Emergency Medicine",
+              "zh": "台灣急診醫學會",
+              "meeting": "年會（六月最後一週週五、六）", "hue": "tsem"},
 }
 
-# 有 logo 圖檔（docs/assets/<hue>.png）的學會；ERC、AHA、AAEM 暫用文字徽章，
+# 有 logo 圖檔（docs/assets/<hue>.png）的學會；AAEMS 暫用文字徽章，
 # 之後把 logo 放進 docs/assets 並加到這裡即可。
-HAS_LOGO = {"acep", "saem", "ifem", "eusem", "asem", "sems", "hkcem"}
+HAS_LOGO = {"acep", "saem", "ifem", "eusem", "asem", "sems", "hkcem", "erc", "aha", "tsem"}
+
+# 地圖旗子另用精簡版圖示（docs/assets/<hue>-flag.png）的學會：
+# 卡片放完整 logo（含文字），旗面太小只放符號。
+FLAG_LOGO = {"erc", "aha", "eusem"}
 
 
 def zh_name(code: str) -> str:
@@ -133,7 +140,8 @@ def prepare(rows: list[dict]) -> list[dict]:
     # 同一個 (學會, 年份) 已經有確切日期時，丟掉沒有日期的那筆。
     # 例如 IFEM 2027 先只公布「JUNE 2027」，後來補上 6/10–14；或暫定的
     # SSEM 2027 被正式日期取代。封存檔只進不出，兩筆都還在，這裡要擇一。
-    dated = {(r.get("society"), r.get("year")) for r in rows if _d(r.get("start", ""))}
+    dated = {(r.get("society"), r.get("year")) for r in rows
+             if _d(r.get("start", "")) and not r.get("tentative")}
     # 官網改期時（例如 ASEM 2028 從 10/20–25 改成 11/6–8），舊日期在封存檔裡
     # 會被標成 delisted。同一 (學會, 年份) 還有現行資料時，舊的那筆就不要再顯示。
     listed = {(r.get("society"), r.get("year")) for r in rows if not r.get("delisted")}
@@ -143,7 +151,8 @@ def prepare(rows: list[dict]) -> list[dict]:
             continue
         if r.get("delisted") and (r.get("society"), r.get("year")) in listed:
             continue
-        if not _d(r.get("start", "")) and (r.get("society"), r.get("year")) in dated:
+        if ((not _d(r.get("start", "")) or r.get("tentative"))
+                and (r.get("society"), r.get("year")) in dated):
             continue
         start, end = _d(r.get("start", "")), _d(r.get("end", ""))
         month = start.month if start else _month_from_text(r.get("date_text", ""))
@@ -151,7 +160,8 @@ def prepare(rows: list[dict]) -> list[dict]:
         r["_start"] = start
         r["_end"] = end or start
         r["_month"] = month
-        r["_confirmed"] = bool(start)
+        # 暫定場次即使有推估日期（例如台灣急診醫學會依慣例推算），也不算確定
+        r["_confirmed"] = bool(start) and not r.get("tentative")
         r["_sort"] = (r.get("year") or 9999, month or 13)
         out.append(r)
     out.sort(key=lambda x: x["_sort"])
@@ -192,7 +202,7 @@ def split_archive(rows: list[dict], today: date) -> tuple[list[dict], list[dict]
 
 
 def next_up(rows: list[dict], today: date) -> dict | None:
-    future = [r for r in rows if r["_end"] and r["_end"] >= today]
+    future = [r for r in rows if r["_confirmed"] and r["_end"] and r["_end"] >= today]
     return future[0] if future else None
 
 
@@ -305,7 +315,7 @@ CSS = """
   --rule:#c6d1d6; --rule-soft:#dde5e8;
   --acep:#9d3a2e; --saem:#2f6a56; --ifem:#8a6820; --eusem:#33518c;
   --asem:#5c4b8a; --hkcem:#a8562b; --sems:#1f6f78;
-  --erc:#2b74ad; --aha:#c4283c; --aaem:#5f6f1c;
+  --erc:#2b74ad; --aha:#c4283c; --aaems:#5f6f1c; --tsem:#2c3e95;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -357,7 +367,8 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .acep{color:var(--acep)} .saem{color:var(--saem)}
 .ifem{color:var(--ifem)} .eusem{color:var(--eusem)}
 .asem{color:var(--asem)} .hkcem{color:var(--hkcem)} .sems{color:var(--sems)}
-.erc{color:var(--erc)} .aha{color:var(--aha)} .aaem{color:var(--aaem)}
+.erc{color:var(--erc)} .aha{color:var(--aha)} .aaems{color:var(--aaems)}
+.tsem{color:var(--tsem)}
 .yearband{grid-column:1/-1; height:1px; background:var(--rule-soft); margin:.25rem 0}
 
 .legend{display:flex; gap:.6rem 1.4rem; flex-wrap:wrap; margin:1rem 0 0; font-size:.8rem}
@@ -574,7 +585,9 @@ def season_grid(rows: list[dict], today: date) -> str:
             past = " past" if r["_end"] and r["_end"] < today else ""
             tba = "" if r["_confirmed"] else " tba"
             when = (f'{r["_start"].month}/{r["_start"].day}–'
-                    f'{r["_end"].month}/{r["_end"].day}') if r["_confirmed"] else "日期未定"
+                    f'{r["_end"].month}/{r["_end"].day}') if r["_start"] else "日期未定"
+            if r["_start"] and not r["_confirmed"]:
+                when += "（暫定）"
             place = r.get("city") or r.get("country_or_state") or "—"
             cells.append(
                 f'<div class="bar {hue}{past}{tba}" '
@@ -642,6 +655,7 @@ CITY_COORDS = {
     "brisbane": (-27.47, 153.03), "perth": (-31.95, 115.86),
     "auckland": (-36.85, 174.76), "san antonio": (29.42, -98.49),
     "fort lauderdale": (26.12, -80.14), "milan": (45.46, 9.19),
+    "hua hin": (12.57, 99.96),
     "rotterdam": (51.92, 4.48), "edinburgh": (55.95, -3.19), "cape town": (-33.92, 18.42),
     "rio de janeiro": (-22.91, -43.17), "sao paulo": (-23.55, -46.63),
     "são paulo": (-23.55, -46.63), "buenos aires": (-34.60, -58.38),
@@ -679,7 +693,7 @@ US_STATES = {
 SOCIETY_HEX = {"ACEP": "#9d3a2e", "SAEM": "#2f6a56", "IFEM": "#8a6820",
                "EUSEM": "#33518c", "ASEM": "#5c4b8a", "HKCEM": "#a8562b",
                "SEMS": "#1f6f78", "ERC": "#2b74ad", "AHA": "#c4283c",
-               "AAEM": "#5f6f1c"}
+               "AAEMS": "#5f6f1c", "TSEM": "#2c3e95"}
 
 CONTINENTS = [("NORTH AMERICA", 47, -103), ("SOUTH AMERICA", -33, -66),
               ("EUROPE", 52, 18), ("AFRICA", 6, 20), ("ASIA", 54, 92),
@@ -723,11 +737,12 @@ def map_when(r: dict) -> str:
     """『May 18 – 21, 2027』；日期未定時寫『June 2027 (date TBA)』。"""
     s, e = r["_start"], r["_end"]
     if s and e:
+        tent = "" if r["_confirmed"] else " (tentative)"
         if s == e:
-            return f"{MON[s.month-1]} {s.day}, {s.year}"
+            return f"{MON[s.month-1]} {s.day}, {s.year}{tent}"
         if s.month == e.month:
-            return f"{MON[s.month-1]} {s.day} – {e.day}, {s.year}"
-        return f"{MON[s.month-1]} {s.day} – {MON[e.month-1]} {e.day}, {e.year}"
+            return f"{MON[s.month-1]} {s.day} – {e.day}, {s.year}{tent}"
+        return f"{MON[s.month-1]} {s.day} – {MON[e.month-1]} {e.day}, {e.year}{tent}"
     m = r.get("_month")
     return f"{MON[m-1]} {r.get('year')} (date TBA)" if m else f"{r.get('year')} (date TBA)"
 
@@ -837,7 +852,8 @@ def flag_svg(it: dict, r: dict, col: str) -> str:
     fy = py - ph
     hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
     if hue in HAS_LOGO:
-        face = (f'<image href="assets/{hue}.png" x="{fx + 3:.1f}" y="{fy + 3:.1f}" '
+        img = f"{hue}-flag.png" if hue in FLAG_LOGO else f"{hue}.png"
+        face = (f'<image href="assets/{img}" x="{fx + 3:.1f}" y="{fy + 3:.1f}" '
                 f'width="{FLAG_W - 6}" height="{FLAG_H - 6}" '
                 f'preserveAspectRatio="xMidYMid meet"/>')
     else:

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-離線測試：ERC、AHA ReSS、AAEM 解析器。
+離線測試：ERC、AHA ReSS 解析器。
 
 文字片段取自 2026-11 各官網頁面（ERC General Information、AHA ReSS 頁的 Key Dates、
-AHA 會議總覽、AAEM Future Scientific Assemblies 與 AAEM27 活動頁）。
+AHA 會議總覽）。
 """
-from em_conferences import parse_erc, parse_ress, parse_aaem
+from em_conferences import parse_erc, parse_ress
 
 ERC_TXT = """General Information: Save The Date - Resuscitation 2027
 We are delighted to welcome you to the ERC Congress - Resuscitation 2027 in Glasgow!
@@ -34,21 +34,6 @@ November 6–9, 2026
 McCormick Place Convention Center
 Chicago, Illinois"""
 
-AAEM_FUTURE_TXT = """Important Dates
-Scientific Assembly:
-April 11-15, 2026
-Future Scientific Assemblies
-33rd Annual Scientific Assembly (AAEM27)
-April 25-29, 2027 | San Antonio, TX | San Antonio Marriott Rivercenter on the River Walk
-34th Annual Scientific Assembly (AAEM28)
-April 2-6, 2028 | Denver, CO | Sheraton Denver Downtown
-35th Annual Scientific Assembly (AAEM29)
-April 22-26, 2029 | Fort Lauderdale, FL | Fort Lauderdale Marriott Harbor Beach Resort & Spa"""
-
-AAEM_EVENT_TXT = """33rd Annual Scientific Assembly (AAEM27)
-Join us for AAEM's 33rd Annual Scientific Assembly, taking place April 25-29, 2027, in San Antonio, Texas."""
-
-
 def test_erc():
     rows = {c.year: c for c in parse_erc(ERC_TXT)}
     assert rows[2027].start == "2027-09-30" and rows[2027].end == "2027-10-02"
@@ -68,20 +53,6 @@ def test_ress_meetings_list():
     (c,) = parse_ress(RESS_MEETINGS_TXT)          # Scientific Sessions 不能被當成 ReSS
     assert (c.year, c.start, c.city) == (2026, "2026-11-07", "Chicago")
     assert c.venue == "McCormick Place Convention Center"
-
-
-def test_aaem_future():
-    rows = {c.year: c for c in parse_aaem(AAEM_FUTURE_TXT)}
-    assert sorted(rows) == [2027, 2028, 2029]
-    assert (rows[2027].start, rows[2027].end) == ("2027-04-25", "2027-04-29")
-    assert (rows[2028].city, rows[2028].country_or_state) == ("Denver", "CO")
-    assert rows[2029].venue.startswith("Fort Lauderdale Marriott")
-    assert rows[2027].name == "33rd Annual Scientific Assembly (AAEM27)"
-
-
-def test_aaem_event_sentence():
-    (c,) = parse_aaem(AAEM_EVENT_TXT)
-    assert (c.year, c.start, c.city, c.country_or_state) == (2027, "2027-04-25", "San Antonio", "Texas")
 
 
 if __name__ == "__main__":

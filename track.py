@@ -18,7 +18,7 @@ import json
 import os
 import sys
 from dataclasses import asdict
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from em_conferences import scrape, scrape_acep_current, SCRAPERS
@@ -145,6 +145,33 @@ def classify_failures(failed: list[str], health: dict, today: date
     return regressions, known
 
 
+def tsem_tentative(today: date | None = None) -> list[dict]:
+    """
+    台灣急診醫學會年會：慣例在六月最後一週的週五、週六舉行，但官網不會
+    提早公布。依這個慣例替今年（若還沒開）與明年各產生一筆暫定場次；
+    跟其他暫定場次一樣，日後抓到正式日期就自動讓位。
+    """
+    today = today or date.today()
+    out = []
+    for y in (today.year, today.year + 1):
+        fri = date(y, 6, 30)
+        while fri.weekday() != 4:                  # 往回找六月最後一個週五
+            fri -= timedelta(days=1)
+        sat = fri + timedelta(days=1)
+        if sat < today:
+            continue
+        out.append({
+            "society": "TSEM", "name": f"台灣急診醫學會 {y} 年會",
+            "year": y,
+            "date_text": f"{y} 年 {fri.month}/{fri.day}（五）–{sat.month}/{sat.day}（六）（暫定）",
+            "start": fri.isoformat(), "end": sat.isoformat(),
+            "city": "", "country_or_state": "Taiwan", "venue": "",
+            "source_url": "https://www.sem.org.tw/", "tentative": True,
+            "note": "暫定場次：依慣例六月最後一週週五、六舉行，正式日期與地點以學會公告為準。",
+        })
+    return out
+
+
 def apply_manual(rows: list[dict]) -> tuple[list[dict], list[str]]:
     """
     人工指定的場次，優先於任何爬到的結果。
@@ -167,6 +194,7 @@ def apply_manual(rows: list[dict]) -> tuple[list[dict], list[str]]:
     except json.JSONDecodeError as exc:
         return rows, [f"manual.json 格式錯誤，已略過：{exc}"]
 
+    manual = manual + tsem_tentative()
     scraped_dated = {(r.get("society"), r.get("year")) for r in rows if r.get("start")}
     # tentative（暫定場次）與 fallback（爬蟲被擋時的備援，例如 AHA、ERC 官網）
     # 都只補空缺：爬蟲有抓到該年確切日期，就以爬蟲為準。
