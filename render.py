@@ -1345,7 +1345,9 @@ def past_coords(r: dict) -> tuple[float, float] | None:
         # SEMS 只收名稱裡有 SEMS 的，避免把 SEMS 官網轉貼的他會公告算進來。
         if not city and soc == "SEMS" and "sems" not in (r.get("name") or "").lower():
             return None
-        if city in {"", "singapore", "hong kong", "taiwan"} | TAIWAN_CITIES:
+        # 城市空白（例如線上會議）才放學會所在地；有寫縣市的照實際縣市放，
+        # 同一縣市的場次會疊在一起（例如台北、嘉義），不同縣市各自一點。
+        if city in {"", "singapore", "hong kong", "taiwan"}:
             return SOCIETY_HOME[soc]
     return coords_for(r)
 
@@ -1484,7 +1486,7 @@ def past_map_section(rows: list[dict]) -> str:
         '</div>'
         f'<div class="wm-board"><div class="m-stage">{ZOOM_CONTROLS}{svg}</div><div class="p-legend">{legend}</div></div>'
         '<p class="wm-note">每顆圖釘是一場會議，顏色代表學會；同一城市辦過多次時圖釘會稍微錯開，'
-        f'細線連回實際位置。台灣、新加坡、香港的學會年會固定在當地舉辦，圖釘疊在同一點，右上角數字是場數。'
+        f'細線連回實際位置。台灣、新加坡、香港學會的會議，同一城市的圖釘疊在同一點，右上角數字是場數；台灣急診醫學會依實際縣市標示，放大地圖可分辨。'
         f'滑鼠移到圖釘上可看名稱、日期與地點。{ZOOM_HINT}{note}</p>'
         '</section>')
 
