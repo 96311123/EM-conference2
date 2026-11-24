@@ -671,7 +671,10 @@ CITY_COORDS = {
     "brisbane": (-27.47, 153.03), "perth": (-31.95, 115.86),
     "auckland": (-36.85, 174.76), "san antonio": (29.42, -98.49),
     "fort lauderdale": (26.12, -80.14), "milan": (45.46, 9.19),
-    "hua hin": (12.57, 99.96),
+    "hua hin": (12.57, 99.96), "antalya": (36.90, 30.70),
+    "new delhi": (28.61, 77.21), "busan": (35.18, 129.08),
+    "clark freeport, angeles city": (15.19, 120.55), "angeles city": (15.15, 120.59),
+    "clark": (15.19, 120.55),
     "rotterdam": (51.92, 4.48), "edinburgh": (55.95, -3.19), "cape town": (-33.92, 18.42),
     "rio de janeiro": (-22.91, -43.17), "sao paulo": (-23.55, -46.63),
     "são paulo": (-23.55, -46.63), "buenos aires": (-34.60, -58.38),
@@ -1199,6 +1202,161 @@ def render_html(rows: list[dict], today: date, generated: str,
 """
 
 
+# --------------------------------------------------------------------------
+# 歷屆會議地圖（past.html）
+# --------------------------------------------------------------------------
+# 跟主頁的世界地圖共用底圖與投影，但不插旗子：每場會議一顆圖釘，顏色代表
+# 學會。同一城市辦過好幾次（例如新加坡、香港）時，圖釘會被輕輕推開，
+# 再用細線連回真正的位置，避免疊成一顆。
+
+# 城市欄空白時的預設地點：只用在學會自己的年會（名稱裡有學會簡稱）。
+SOCIETY_HOME = {"SEMS": (1.35, 103.82), "HKCEM": (22.32, 114.17), "TSEM": (23.7, 121.0)}
+
+PIN_R = 4.6          # 圖釘半徑（地圖座標）
+PIN_GAP = 10.2       # 兩顆圖釘中心最少相距
+
+
+def past_coords(r: dict) -> tuple[float, float] | None:
+    c = coords_for(r)
+    if c:
+        return c
+    soc = r.get("society", "")
+    if (not r.get("city") and soc in SOCIETY_HOME
+            and soc.lower() in (r.get("name") or "").lower()):
+        return SOCIETY_HOME[soc]
+    return None
+
+
+def spread_pins(anchors: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """
+    把太近的圖釘推開。完全同點的先排成一圈，再反覆做「互相排斥＋輕輕拉回
+    原位」，直到任兩顆至少相距 PIN_GAP。回傳每顆圖釘最後的位置。
+    """
+    pos = [list(a) for a in anchors]
+    groups: dict[tuple, list[int]] = {}
+    for i, (x, y) in enumerate(anchors):
+        groups.setdefault((round(x, 1), round(y, 1)), []).append(i)
+    for idx in groups.values():
+        if len(idx) > 1:
+            rad = PIN_GAP * len(idx) / (2 * math.pi) + 1.5
+            for k, i in enumerate(idx):
+                a = -math.pi / 2 + 2 * math.pi * k / len(idx)
+                pos[i][0] += rad * math.cos(a)
+                pos[i][1] += rad * math.sin(a)
+    for _ in range(300):
+        moved = False
+        for i in range(len(pos)):
+            for j in range(i + 1, len(pos)):
+                dx, dy = pos[j][0] - pos[i][0], pos[j][1] - pos[i][1]
+                d = math.hypot(dx, dy)
+                if d < PIN_GAP:
+                    if d < 1e-6:
+                        dx, dy, d = 1.0, 0.0, 1.0
+                    push = (PIN_GAP - d) / 2 + 0.05
+                    ux, uy = dx / d, dy / d
+                    pos[i][0] -= ux * push; pos[i][1] -= uy * push
+                    pos[j][0] += ux * push; pos[j][1] += uy * push
+                    moved = True
+        for i, (ax, ay) in enumerate(anchors):          # 輕輕拉回原位
+            pos[i][0] += (ax - pos[i][0]) * 0.02
+            pos[i][1] += (ay - pos[i][1]) * 0.02
+        if not moved:
+            break
+    return [(x, y) for x, y in pos]
+
+
+def past_map_section(rows: list[dict]) -> str:
+    items = []
+    for r in sorted(rows, key=lambda r: (r["_start"] or date.min)):
+        c = past_coords(r)
+        if c:
+            items.append((r, project(*c)))
+    if not items:
+        return ""
+    pins = spread_pins([xy for _, xy in items])
+
+    legs, dots, g = [], [], []
+    for (r, (ax, ay)), (px, py) in zip(items, pins):
+        col = SOCIETY_HEX.get(r["society"], "#555")
+        if math.hypot(px - ax, py - ay) > 1.5:
+            legs.append(f'<line x1="{ax:.1f}" y1="{ay:.1f}" x2="{px:.1f}" y2="{py:.1f}" class="p-leg"/>')
+            dots.append((round(ax, 1), round(ay, 1)))
+        title = f'{meeting_code(r["society"])} {r.get("year") or ""}'.strip()
+        when, place = map_when(r), map_place(r)
+        w = max(_text_w(title, 14) + 4, _text_w(when, 10.5) + 17, _text_w(place, 10.5) + 17) + 22
+        h = 56
+        bx = px + 12 if px + 12 + w < MAP_W - 4 else px - 12 - w
+        by = min(max(py - h - 8, 4), MAP_H - h - 4)
+        href = html.escape(r.get("source_url") or "#")
+        g.append(
+            f'<a href="{href}" class="m-item">'
+            f'<title>{html.escape(display_name(r))}</title>'
+            f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{PIN_R}" class="p-pin" style="fill:{col}"/>'
+            f'<g class="m-callout">'
+            f'<rect x="{bx:.1f}" y="{by:.1f}" width="{w:.1f}" height="{h}" rx="4" class="m-card"/>'
+            f'<rect x="{bx + 7:.1f}" y="{by + 8:.1f}" width="4" height="15" rx="1" fill="{col}"/>'
+            f'<text x="{bx + 16:.1f}" y="{by + 21:.1f}" class="m-t">{html.escape(title)}</text>'
+            f'<use href="#mi-cal" x="{bx + 16:.1f}" y="{by + 27.5:.1f}" width="9" height="9"/>'
+            f'<text x="{bx + 29:.1f}" y="{by + 35.5:.1f}" class="m-s">{html.escape(when)}</text>'
+            f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
+            f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">{html.escape(place)}</text>'
+            f'</g></a>')
+    anchor_dots = "".join(f'<circle cx="{x}" cy="{y}" r="1.6" class="p-anchor"/>'
+                          for x, y in sorted(set(dots)))
+
+    present = [s for s in SOCIETY_META if any(r["society"] == s for r, _ in items)]
+    legend = "".join(
+        f'<span class="p-key"><i style="background:{SOCIETY_HEX.get(s, "#555")}"></i>'
+        f'{html.escape(meeting_code(s))}'
+        f'<small>{sum(1 for r, _ in items if r["society"] == s)}</small></span>'
+        for s in present)
+    missing = len(rows) - len(items)
+    note = (f"另有 {missing} 場沒有可辨識的地點（例如線上會議），只列在下方清單。"
+            if missing else "")
+
+    svg = (f'<svg class="m-svg" viewBox="0 0 {MAP_W} {MAP_H:.0f}" role="img" '
+           f'aria-label="歷屆會議地圖">'
+           f'<defs>{ICON_CAL_SVG}{ICON_PIN_SVG}'
+           f'<filter id="m-shadow" x="-10%" y="-10%" width="120%" height="140%">'
+           f'<feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-opacity=".28"/>'
+           f'</filter></defs>'
+           f'<path d="{COUNTRIES_PATH}" class="m-land"/>'
+           f'{"".join(legs)}{anchor_dots}<g class="p-pins">{"".join(g)}</g></svg>')
+    return (
+        '<section class="worldmap pastmap" aria-labelledby="pm-title">'
+        '<div class="wm-head">'
+        f'<h2 id="pm-title">歷屆會議地圖 <span class="wm-year">{len(items)} 場</span></h2>'
+        '</div>'
+        f'<div class="wm-board">{svg}<div class="p-legend">{legend}</div></div>'
+        '<p class="wm-note">每顆圖釘是一場會議，顏色代表學會；同一城市辦過多次時圖釘會稍微錯開，'
+        f'細線連回實際位置。滑鼠移到圖釘上可看名稱、日期與地點。{note}</p>'
+        '</section>')
+
+
+PAST_MAP_CSS = """
+.p-pin{stroke:#fff; stroke-width:1.3; cursor:pointer; transition:r .1s}
+.m-item:hover .p-pin,.m-item:focus .p-pin{r:6.4; stroke:#13222a}
+.p-leg{stroke:#efe8dc; stroke-width:.9; opacity:.85}
+.p-anchor{fill:#efe8dc}
+.p-legend{display:flex; flex-wrap:wrap; gap:.35rem .9rem; margin-top:.8rem; padding:.55rem .8rem;
+  background:#fbfaf7; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.18); font-size:.82rem; color:#13222a}
+.p-key{display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap}
+.p-key i{width:.8rem; height:.8rem; border-radius:50%; border:1.5px solid #fff;
+  box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.p-key small{color:#7a858c; font-size:.72rem}
+@media (max-width:700px){ .p-pin{r:7} }
+"""
+
+PAST_MAP_JS = """
+(function(){
+  document.querySelectorAll('.pastmap .m-item').forEach(function(a){
+    function lift(){ if(a.parentNode.lastElementChild !== a) a.parentNode.appendChild(a); }
+    a.addEventListener('mouseenter', lift); a.addEventListener('focus', lift);
+  });
+})();
+"""
+
+
 def render_archive(rows: list[dict], today: date, generated: str) -> str:
     """歷屆會議封存頁。刻意做得比主頁安靜——這裡是查資料的地方，不是待辦清單。"""
     years = sorted({r["year"] for r in rows if r.get("year")})
@@ -1213,7 +1371,7 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&display=swap" rel="stylesheet">
-<style>{CSS}</style>
+<style>{CSS}{MAP_CSS}{PAST_MAP_CSS}</style>
 </head>
 <body>
 <div class="wrap">
@@ -1228,6 +1386,8 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
     {len(rows)} 場已結束的會議{f"，{span}" if span else ""}。
     尚未結束的場次與投稿死線都在主頁。</p>
 </section>
+
+{past_map_section(rows)}
 
 <section style="margin-top:2rem">
   <h2>年度節奏</h2>
@@ -1244,6 +1404,7 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 </footer>
 
 </div>
+<script>{PAST_MAP_JS}</script>
 </body>
 </html>
 """
