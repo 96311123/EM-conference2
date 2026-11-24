@@ -903,7 +903,20 @@ def world_map_section(rows: list[dict], today: date) -> str:
     if not years:
         return ""
     nxt = next_up(rows, today)
-    default = nxt["year"] if nxt else years[0]
+
+    # 每個分頁是一組場次。11/1 之後今年剩不到兩個月，多一個「今年＋明年」的
+    # 合併分頁並設為預設，讓地圖一打開就看得到明年的年會。
+    def pick(ys):
+        return sorted([r for r in rows if r.get("year") in ys],
+                      key=lambda r: (r["year"], r["_month"] or 13, r["_start"] or date.max))
+    views = []
+    if today.month >= 11 and today.year + 1 in years:
+        y0 = today.year
+        views.append((f"{y0}-{y0 + 1}", f"{y0}–{str(y0 + 1)[2:]}", f"{y0}–{y0 + 1}",
+                      pick({y0, y0 + 1})))
+    views += [(str(y), str(y), str(y), pick({y})) for y in years]
+    default = views[0][0] if len(views) > len(years) else str(nxt["year"] if nxt else years[0])
+    default_title = next(v[2] for v in views if v[0] == default)
 
     cont = []
     for name, lat, lon in CONTINENTS:
@@ -918,16 +931,14 @@ def world_map_section(rows: list[dict], today: date) -> str:
     obstacles: list[tuple] = []
 
     groups, strips, tabs = [], [], []
-    for y in years:
-        in_year = sorted([r for r in rows if r.get("year") == y],
-                         key=lambda r: (r["_month"] or 13, r["_start"] or date.max))
+    for key, tab_label, title_label, in_year in views:
         items = []
         for r in in_year:
             c = coords_for(r)
             if not c:
                 continue
             px, py = project(*c)
-            title = f'{meeting_code(r["society"])} {y}'
+            title = f'{meeting_code(r["society"])} {r["year"]}'
             when, place = map_when(r), map_place(r)
             w = max(_text_w(title, 14) + 4, _text_w(when, 10.5) + 17,
                     _text_w(place, 10.5) + 17) + 22
@@ -972,8 +983,8 @@ def world_map_section(rows: list[dict], today: date) -> str:
                 f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">'
                 f'{html.escape(it["place"])}</text></g>'
                 f'{flag_svg(it, r, col)}</g></a>')
-        hidden = "" if y == default else " hidden"
-        groups.append(f'<g class="m-year" data-year="{y}"{hidden}>{"".join(g)}</g>')
+        hidden = "" if key == default else " hidden"
+        groups.append(f'<g class="m-year" data-year="{key}"{hidden}>{"".join(g)}</g>')
 
         cells = []
         for r in in_year:
@@ -982,16 +993,16 @@ def world_map_section(rows: list[dict], today: date) -> str:
             cells.append(
                 f'<a class="ms-cell{tba}" href="{html.escape(r.get("source_url") or "#")}" '
                 f'style="--c:var(--{hue})">'
-                f'<b>{html.escape(meeting_code(r["society"]))} {y}</b>'
+                f'<b>{html.escape(meeting_code(r["society"]))} {r["year"]}</b>'
                 f'<span>{ICON_PIN}{html.escape(map_place(r))}</span>'
                 f'<span>{ICON_CAL}{html.escape(map_when(r))}</span></a>')
         strips.append(
-            f'<div class="ms-strip" data-year="{y}"{hidden}>'
+            f'<div class="ms-strip" data-year="{key}"{hidden}>'
             f'<div class="ms-flag">{ICON_CAL}<span>Upcoming <br>EM Conferences'
-            f'<b>{y}</b></span></div>'
+            f'<b>{title_label}</b></span></div>'
             f'<div class="ms-cells">{"".join(cells)}</div></div>')
-        tabs.append(f'<button type="button" data-year="{y}" '
-                    f'aria-pressed="{"true" if y == default else "false"}">{y}</button>')
+        tabs.append(f'<button type="button" data-year="{key}" data-title="{title_label}" '
+                    f'aria-pressed="{"true" if key == default else "false"}">{tab_label}</button>')
 
     svg = (f'<svg class="m-svg" viewBox="0 0 {MAP_W} {MAP_H:.0f}" role="img" '
            f'aria-label="全球急診醫學會議地圖">'
@@ -1005,7 +1016,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
     return (
         '<section class="worldmap" aria-labelledby="wm-title">'
         '<div class="wm-head">'
-        f'<h2 id="wm-title">全球急診醫學會議地圖 <span class="wm-year">{default}</span></h2>'
+        f'<h2 id="wm-title">全球急診醫學會議地圖 <span class="wm-year">{default_title}</span></h2>'
         f'<div class="wm-tabs" role="group" aria-label="選擇年份">{"".join(tabs)}</div>'
         '</div>'
         f'<div class="wm-board"><div class="m-stage">{ZOOM_CONTROLS}{svg}</div>{"".join(strips)}</div>'
@@ -1131,7 +1142,8 @@ MAP_JS = """
       if(el.tagName === 'BUTTON'){ el.setAttribute('aria-pressed', el.dataset.year === y); return; }
       if(el.dataset.year === y) el.removeAttribute('hidden'); else el.setAttribute('hidden','');
     });
-    box.querySelector('.wm-year').textContent = y;
+    var b = box.querySelector('.wm-tabs button[data-year="' + y + '"]');
+    box.querySelector('.wm-year').textContent = b ? b.dataset.title : y;
   }
   btns.forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.year); }); });
   // SVG 沒有 z-index：滑到哪支旗子，就把它移到最上層，標籤卡才不會被別的旗子壓住
