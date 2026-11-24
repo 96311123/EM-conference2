@@ -905,10 +905,11 @@ def world_map_section(rows: list[dict], today: date) -> str:
         x, y = project(lat, lon)
         tw = _text_w(name, 10.5)
         cont.append(((x - tw / 2, y - 10, tw, 14),
+                     f'<g class="m-z" data-x="{x:.1f}" data-y="{y:.1f}">'
                      f'<text x="{x:.1f}" y="{y:.1f}" class="m-cont" '
                      f'text-anchor="middle">{name}</text>'
                      f'<line x1="{x - tw/2:.1f}" x2="{x + tw/2:.1f}" y1="{y + 3:.1f}" '
-                     f'y2="{y + 3:.1f}" class="m-cont-ul"/>'))
+                     f'y2="{y + 3:.1f}" class="m-cont-ul"/></g>'))
     obstacles: list[tuple] = []
 
     groups, strips, tabs = [], [], []
@@ -949,6 +950,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
             g.append(
                 f'<a href="{href}" class="m-item{tba}">'
                 f'<title>{html.escape(display_name(r))}</title>'
+                f'<g class="m-z" data-x="{it["px"]:.1f}" data-y="{it["py"]:.1f}">'
                 f'<line x1="{it["px"]:.1f}" y1="{it["py"]:.1f}" x2="{lx:.1f}" y2="{ly:.1f}" '
                 f'class="m-lead"/>'
                 f'<g class="m-callout">'
@@ -964,7 +966,7 @@ def world_map_section(rows: list[dict], today: date) -> str:
                 f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
                 f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">'
                 f'{html.escape(it["place"])}</text></g>'
-                f'{flag_svg(it, r, col)}</a>')
+                f'{flag_svg(it, r, col)}</g></a>')
         hidden = "" if y == default else " hidden"
         groups.append(f'<g class="m-year" data-year="{y}"{hidden}>{"".join(g)}</g>')
 
@@ -992,8 +994,8 @@ def world_map_section(rows: list[dict], today: date) -> str:
            f'<filter id="m-shadow" x="-10%" y="-10%" width="120%" height="140%">'
            f'<feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-opacity=".28"/>'
            f'</filter></defs>'
-           f'<path d="{COUNTRIES_PATH}" class="m-land"/>'
-           f'{"".join(groups)}</svg>')
+           f'<g class="m-layer"><path d="{COUNTRIES_PATH}" class="m-land"/>'
+           f'{"".join(groups)}</g></svg>')
 
     return (
         '<section class="worldmap" aria-labelledby="wm-title">'
@@ -1001,9 +1003,117 @@ def world_map_section(rows: list[dict], today: date) -> str:
         f'<h2 id="wm-title">全球急診醫學會議地圖 <span class="wm-year">{default}</span></h2>'
         f'<div class="wm-tabs" role="group" aria-label="選擇年份">{"".join(tabs)}</div>'
         '</div>'
-        f'<div class="wm-board">{svg}{"".join(strips)}</div>'
-        '<p class="wm-note">滑鼠移到旗子上可看會議名稱、日期與地點；點旗子或下方卡片前往官方頁面。虛線代表日期尚未公布。</p>'
+        f'<div class="wm-board"><div class="m-stage">{ZOOM_CONTROLS}{svg}</div>{"".join(strips)}</div>'
+        '<p class="wm-note">滑鼠移到旗子上可看會議名稱、日期與地點；點旗子或下方卡片前往官方頁面。虛線代表日期尚未公布。'
+        f'{ZOOM_HINT}</p>'
         '</section>')
+
+
+ZOOM_HINT = "縮放：右上角＋／−，或按住 Ctrl（Mac 為 ⌘）捲動滾輪、雙擊地圖、手機雙指開合；放大後可拖曳移動。"
+
+ZOOM_CONTROLS = ('<div class="m-zoom" role="group" aria-label="地圖縮放">'
+                 '<button type="button" data-z="in" aria-label="放大">+</button>'
+                 '<button type="button" data-z="out" aria-label="縮小">−</button>'
+                 '<button type="button" data-z="reset" aria-label="還原" title="還原">⤢</button></div>')
+
+# 地圖縮放／拖曳：整張圖放在 .m-layer 裡做 translate+scale；每個標記（.m-z）再以自己的
+# 位置為中心反向縮放，所以放大時地圖變大，但圖釘、旗子、標籤維持原本大小。
+# 滾輪需按住 Ctrl／⌘（觸控板雙指縮放也會送出 ctrl+wheel），免得捲動網頁時誤觸。
+ZOOM_JS = """
+(function(){
+  document.querySelectorAll('.m-stage').forEach(function(stage){
+    var svg = stage.querySelector('svg.m-svg'), layer = svg.querySelector('.m-layer');
+    var vb = svg.viewBox.baseVal, W = vb.width, H = vb.height;
+    var k = 1, tx = 0, ty = 0, KMAX = 10;
+    var marks = Array.prototype.slice.call(svg.querySelectorAll('.m-z'));
+    function clamp(){
+      k = Math.min(KMAX, Math.max(1, k));
+      tx = Math.min(0, Math.max(W - W * k, tx));
+      ty = Math.min(0, Math.max(H - H * k, ty));
+    }
+    function apply(){
+      clamp();
+      layer.setAttribute('transform', 'translate(' + tx + ',' + ty + ') scale(' + k + ')');
+      var inv = 1 / k;
+      marks.forEach(function(m){
+        var x = +m.dataset.x, y = +m.dataset.y;
+        m.setAttribute('transform', 'translate(' + x + ',' + y + ') scale(' + inv + ') translate(' + (-x) + ',' + (-y) + ')');
+      });
+      stage.classList.toggle('zoomed', k > 1.001);
+    }
+    function pt(cx, cy){            // 螢幕座標 → SVG 座標
+      var p = svg.createSVGPoint(); p.x = cx; p.y = cy;
+      return p.matrixTransform(svg.getScreenCTM().inverse());
+    }
+    function zoomAt(f, sx, sy){     // 以 SVG 座標 (sx, sy) 為中心縮放 f 倍
+      var nk = Math.min(KMAX, Math.max(1, k * f)); f = nk / k;
+      tx = sx - (sx - tx) * f; ty = sy - (sy - ty) * f; k = nk; apply();
+    }
+    stage.querySelectorAll('.m-zoom button').forEach(function(b){
+      b.addEventListener('click', function(){
+        if (b.dataset.z === 'reset') { k = 1; tx = ty = 0; apply(); return; }
+        zoomAt(b.dataset.z === 'in' ? 1.6 : 1 / 1.6, W / 2, H / 2);
+      });
+    });
+    svg.addEventListener('wheel', function(e){
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      var p = pt(e.clientX, e.clientY);
+      zoomAt(Math.exp(-e.deltaY * 0.01), p.x, p.y);
+    }, {passive: false});
+    svg.addEventListener('dblclick', function(e){
+      e.preventDefault(); var p = pt(e.clientX, e.clientY); zoomAt(e.shiftKey ? 1 / 2 : 2, p.x, p.y);
+    });
+    // 拖曳平移與雙指縮放
+    var pts = {}, last = null, moved = 0, pinch = null;
+    svg.addEventListener('pointerdown', function(e){
+      pts[e.pointerId] = {x: e.clientX, y: e.clientY}; moved = 0;
+      var ids = Object.keys(pts);
+      if (ids.length === 2) {
+        var a = pts[ids[0]], b = pts[ids[1]];
+        pinch = {d: Math.hypot(a.x - b.x, a.y - b.y), k: k};
+      }
+      last = {x: e.clientX, y: e.clientY};
+    });
+    svg.addEventListener('pointermove', function(e){
+      if (!pts[e.pointerId]) return;
+      pts[e.pointerId] = {x: e.clientX, y: e.clientY};
+      var ids = Object.keys(pts);
+      if (ids.length === 2 && pinch) {
+        var a = pts[ids[0]], b = pts[ids[1]];
+        var c = pt((a.x + b.x) / 2, (a.y + b.y) / 2);
+        zoomAt(pinch.k * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d / k, c.x, c.y);
+        moved += 10; return;
+      }
+      if (k <= 1.001 || !last) return;
+      var p0 = pt(last.x, last.y), p1 = pt(e.clientX, e.clientY);
+      tx += p1.x - p0.x; ty += p1.y - p0.y; moved += Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y);
+      last = {x: e.clientX, y: e.clientY}; apply();
+      if (moved > 4 && !svg.hasPointerCapture(e.pointerId)) svg.setPointerCapture(e.pointerId);
+    });
+    function up(e){ delete pts[e.pointerId]; if (Object.keys(pts).length < 2) pinch = null; last = null; }
+    svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
+    // 拖曳之後放開滑鼠，不要順便點進連結
+    svg.addEventListener('click', function(e){ if (moved > 4) { e.preventDefault(); e.stopPropagation(); } }, true);
+    apply();
+  });
+})();
+"""
+
+ZOOM_CSS = """
+.m-stage{position:relative; overflow:hidden; border-radius:6px}
+.m-stage .m-svg{touch-action:pan-y; user-select:none; -webkit-user-select:none}
+.m-stage.zoomed .m-svg{touch-action:none; cursor:grab}
+.m-stage.zoomed .m-svg:active{cursor:grabbing}
+.m-land,.p-leg,.m-lead,.m-pole,.m-cont-ul{vector-effect:non-scaling-stroke}
+.m-zoom{position:absolute; right:.5rem; top:.5rem; z-index:2; display:flex; flex-direction:column;
+  border-radius:6px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.m-zoom button{font:600 1.05rem/1 "Inter","Helvetica Neue",Arial,sans-serif; width:2rem; height:2rem;
+  border:0; border-top:1px solid #ddd6cc; background:#fbfaf7; color:#13222a; cursor:pointer}
+.m-zoom button:first-child{border-top:0}
+.m-zoom button:hover{background:#fff}
+.m-zoom button:focus-visible{outline:2px solid #1d3550; outline-offset:-2px}
+"""
 
 
 MAP_JS = """
@@ -1142,7 +1252,7 @@ def render_html(rows: list[dict], today: date, generated: str,
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&display=swap" rel="stylesheet">
-<style>{CSS}{MAP_CSS}</style>
+<style>{CSS}{MAP_CSS}{ZOOM_CSS}</style>
 </head>
 <body>
 <div class="wrap">
@@ -1202,6 +1312,7 @@ def render_html(rows: list[dict], today: date, generated: str,
   if (days <= 0) el.innerHTML = '<b>進行中</b>';
 }})();
 {MAP_JS}
+{ZOOM_JS}
 </script>
 </body>
 </html>
@@ -1317,6 +1428,7 @@ def past_map_section(rows: list[dict]) -> str:
         g.append(
             f'<a href="{href}" class="m-item">'
             f'<title>{html.escape(display_name(r))}</title>'
+            f'<g class="m-z" data-x="{px:.1f}" data-y="{py:.1f}">'
             f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{PIN_R}" class="p-pin" style="fill:{col}"/>'
             f'<g class="m-callout">'
             f'<rect x="{bx:.1f}" y="{by:.1f}" width="{w:.1f}" height="{h}" rx="4" class="m-card"/>'
@@ -1326,17 +1438,18 @@ def past_map_section(rows: list[dict]) -> str:
             f'<text x="{bx + 29:.1f}" y="{by + 35.5:.1f}" class="m-s">{html.escape(when)}</text>'
             f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
             f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">{html.escape(place)}</text>'
-            f'</g></a>')
+            f'</g></g></a>')
     # 疊放的圖釘：在同一點加一個小數字，顯示疊了幾場
     stacks: dict[tuple, list] = {}
     for (r, _), (px, py) in zip(items, pins):
         if r["society"] in STACK_SOCIETIES:
             stacks.setdefault((round(px, 1), round(py, 1), r["society"]), []).append(r)
     badges = "".join(
-        f'<g class="p-stack"><circle cx="{x + 4.6:.1f}" cy="{y - 4.6:.1f}" r="4.4"/>'
-        f'<text x="{x + 4.6:.1f}" y="{y - 2.6:.1f}" text-anchor="middle">{len(v)}</text></g>'
+        f'<g class="m-z" data-x="{x:.1f}" data-y="{y:.1f}"><g class="p-stack"><circle cx="{x + 4.6:.1f}" cy="{y - 4.6:.1f}" r="4.4"/>'
+        f'<text x="{x + 4.6:.1f}" y="{y - 2.6:.1f}" text-anchor="middle">{len(v)}</text></g></g>'
         for (x, y, _), v in stacks.items() if len(v) > 1)
-    anchor_dots = "".join(f'<circle cx="{x}" cy="{y}" r="1.6" class="p-anchor"/>'
+    anchor_dots = "".join(f'<g class="m-z" data-x="{x}" data-y="{y}">'
+                          f'<circle cx="{x}" cy="{y}" r="1.6" class="p-anchor"/></g>'
                           for x, y in sorted(set(dots)))
 
     present = [s for s in SOCIETY_META if any(r["society"] == s for r, _ in items)]
@@ -1355,17 +1468,17 @@ def past_map_section(rows: list[dict]) -> str:
            f'<filter id="m-shadow" x="-10%" y="-10%" width="120%" height="140%">'
            f'<feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-opacity=".28"/>'
            f'</filter></defs>'
-           f'<path d="{COUNTRIES_PATH}" class="m-land"/>'
-           f'{"".join(legs)}{anchor_dots}<g class="p-pins">{"".join(g)}</g>{badges}</svg>')
+           f'<g class="m-layer"><path d="{COUNTRIES_PATH}" class="m-land"/>'
+           f'{"".join(legs)}{anchor_dots}<g class="p-pins">{"".join(g)}</g>{badges}</g></svg>')
     return (
         '<section class="worldmap pastmap" aria-labelledby="pm-title">'
         '<div class="wm-head">'
         f'<h2 id="pm-title">歷屆會議地圖 <span class="wm-year">{len(items)} 場</span></h2>'
         '</div>'
-        f'<div class="wm-board">{svg}<div class="p-legend">{legend}</div></div>'
+        f'<div class="wm-board"><div class="m-stage">{ZOOM_CONTROLS}{svg}</div><div class="p-legend">{legend}</div></div>'
         '<p class="wm-note">每顆圖釘是一場會議，顏色代表學會；同一城市辦過多次時圖釘會稍微錯開，'
         f'細線連回實際位置。台灣、新加坡、香港的學會年會固定在當地舉辦，圖釘疊在同一點，右上角數字是場數。'
-        f'滑鼠移到圖釘上可看名稱、日期與地點。{note}</p>'
+        f'滑鼠移到圖釘上可看名稱、日期與地點。{ZOOM_HINT}{note}</p>'
         '</section>')
 
 
@@ -1410,7 +1523,7 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&display=swap" rel="stylesheet">
-<style>{CSS}{MAP_CSS}{PAST_MAP_CSS}</style>
+<style>{CSS}{MAP_CSS}{ZOOM_CSS}{PAST_MAP_CSS}</style>
 </head>
 <body>
 <div class="wrap">
@@ -1443,7 +1556,7 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 </footer>
 
 </div>
-<script>{PAST_MAP_JS}</script>
+<script>{PAST_MAP_JS}{ZOOM_JS}</script>
 </body>
 </html>
 """
