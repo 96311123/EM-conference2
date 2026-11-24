@@ -116,6 +116,10 @@ def fetch_text(url: str, session: requests.Session | None = None) -> str:
         except Exception:
             pass
 
+    # AWS WAF 之類的瀏覽器驗證頁：回 202 加一段 JS 挑戰，沒有實際內容（AAEM 官網就是）。
+    # 這是對方明確的防爬設定，不嘗試繞過，直接當成抓取失敗，交給備援資料。
+    if "awsWafCookieDomainList" in r.text or "challenge-platform" in r.text:
+        raise RuntimeError(f"被網站的瀏覽器驗證擋下（HTTP {r.status_code}）")
     r.raise_for_status()
     r.encoding = r.apparent_encoding or r.encoding
     return html_to_text(r.text)
@@ -668,13 +672,8 @@ def scrape_aaem(session: requests.Session | None = None) -> list[Conference]:
             text = fetch_text(url, s)
             got = parse_aaem(text, source_url=url)
             if not got:
-                snippet = re.sub(r"\s+", " ", text)[:400]
-                raw = s.get(url, headers=HEADERS, timeout=TIMEOUT)
-                body = re.sub(r"\s+", " ", raw.text)
-                print(f"[warn] AAEM: {url} 抓到頁面但沒解析出資料；文字開頭：{snippet!r}；"
-                      f"HTTP {raw.status_code} {raw.headers.get('content-type')} "
-                      f"長度 {len(raw.text)} server={raw.headers.get('server')}；"
-                      f"HTML 開頭：{body[:500]}", file=sys.stderr)
+                print(f"[warn] AAEM: {url} 抓到頁面但沒解析出資料，版面可能改了",
+                      file=sys.stderr)
             for c in got:
                 old = best.get(c.year)
                 if not old or (bool(c.venue), bool(c.city)) > (bool(old.venue), bool(old.city)):
