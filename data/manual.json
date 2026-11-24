@@ -154,14 +154,26 @@
     "society": "AAEMS",
     "name": "EMS Asia Conference 2027",
     "year": 2027,
-    "date_text": "2027（日期、地點未公布）",
-    "start": "",
-    "end": "",
-    "city": "",
-    "country_or_state": "",
+    "date_text": "September 1-3, 2027",
+    "start": "2027-09-01",
+    "end": "2027-09-03",
+    "city": "Seoul",
+    "country_or_state": "South Korea",
     "venue": "",
     "source_url": "https://emsasia.org/",
-    "tentative": true,
-    "note": "暫定場次：AAEMS 的 EMS Asia 下一屆尚未公布（2025 泰國華欣二月、2026 新加坡十一月）。公布後請更新本筆。"
+    "note": "人工提供（2026-11-24）"
+  },
+  {
+    "society": "AAEMS",
+    "name": "EMS Asia Conference 2028",
+    "year": 2028,
+    "date_text": "June 2028",
+    "start": "",
+    "end": "",
+    "city": "Taipei",
+    "country_or_state": "Taiwan",
+    "venue": "",
+    "source_url": "https://emsasia.org/",
+    "note": "人工提供（2026-11-24）：六月，確切日期未公布"
   }
 ]
