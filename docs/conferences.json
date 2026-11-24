@@ -570,7 +570,7 @@
     "venue": "",
     "source_url": "https://professional.heart.org/en/meetings/resuscitation-science-symposium",
     "fallback": true,
-    "note": "",
+    "note": "備援資料：AHA ReSS 官網 Key Dates for #ReSS27",
     "manual": true,
     "first_seen": "2026-11-24",
     "last_seen": "2026-11-24",
@@ -783,7 +783,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Brazilian Association of Emergency Medicine (ABRAMEDE)",
+    "note": "Host: Brazilian Association of Emergency Medicine (ABRAMEDE) ｜ 本次擷取失敗，沿用上次結果",
     "first_seen": "2026-09-10",
     "last_seen": "2026-11-24",
     "delisted": false
@@ -799,7 +799,7 @@
     "country_or_state": "",
     "venue": "",
     "source_url": "https://www.ifem.cc/about_congress",
-    "note": "Host: Irish Association for Emergency Medicine (IAEM)",
+    "note": "Host: Irish Association for Emergency Medicine (IAEM) ｜ 本次擷取失敗，沿用上次結果",
     "first_seen": "2026-11-24",
     "last_seen": "2026-11-24",
     "delisted": false
