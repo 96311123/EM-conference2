@@ -669,8 +669,12 @@ def scrape_aaem(session: requests.Session | None = None) -> list[Conference]:
             got = parse_aaem(text, source_url=url)
             if not got:
                 snippet = re.sub(r"\s+", " ", text)[:400]
-                print(f"[warn] AAEM: {url} 抓到頁面但沒解析出資料；開頭：{snippet}",
-                      file=sys.stderr)
+                raw = s.get(url, headers=HEADERS, timeout=TIMEOUT)
+                body = re.sub(r"\s+", " ", raw.text)
+                print(f"[warn] AAEM: {url} 抓到頁面但沒解析出資料；文字開頭：{snippet!r}；"
+                      f"HTTP {raw.status_code} {raw.headers.get('content-type')} "
+                      f"長度 {len(raw.text)} server={raw.headers.get('server')}；"
+                      f"HTML 開頭：{body[:500]}", file=sys.stderr)
             for c in got:
                 old = best.get(c.year)
                 if not old or (bool(c.venue), bool(c.city)) > (bool(old.venue), bool(old.city)):
