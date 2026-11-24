@@ -555,6 +555,41 @@ ICON_PIN = ('<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" '
             '3 6.3c0 3.6 5 8.2 5 8.2Z"/><circle cx="8" cy="6.2" r="1.9"/></svg>')
 
 
+STATE_ABBR = {
+    "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR", "california": "CA",
+    "colorado": "CO", "connecticut": "CT", "delaware": "DE", "florida": "FL", "georgia": "GA",
+    "hawaii": "HI", "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA",
+    "kansas": "KS", "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
+    "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS",
+    "missouri": "MO", "montana": "MT", "nebraska": "NE", "nevada": "NV",
+    "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
+    "north carolina": "NC", "north dakota": "ND", "ohio": "OH", "oklahoma": "OK",
+    "oregon": "OR", "pennsylvania": "PA", "rhode island": "RI", "south carolina": "SC",
+    "south dakota": "SD", "tennessee": "TN", "texas": "TX", "utah": "UT", "vermont": "VT",
+    "virginia": "VA", "washington": "WA", "west virginia": "WV", "wisconsin": "WI",
+    "wyoming": "WY", "district of columbia": "DC",
+}
+
+
+COUNTRY_ALIAS = {"Korea": "South Korea", "UK": "United Kingdom", "USA": "", "United States": ""}
+CITY_COUNTRY = {"milan": "Italy", "paris": "France", "rotterdam": "Netherlands",
+                "glasgow": "United Kingdom", "london": "United Kingdom"}
+CITY_STATES = {"hong kong", "singapore"}    # 城市即國家／地區，不再加國名
+
+
+def card_place(r: dict) -> str:
+    """卡片上的地點：美國一律『城市, 州縮寫』（Boston, MA），其他『城市, 國家』。"""
+    city = (r.get("city") or "").strip()
+    region = (r.get("country_or_state") or "").strip()
+    region = STATE_ABBR.get(region.lower(), region)
+    region = COUNTRY_ALIAS.get(region, region)
+    if not region:
+        region = CITY_COUNTRY.get(city.lower(), "")
+    if region.lower() == city.lower() or (city.lower() in CITY_STATES and region == "China"):
+        region = ""
+    return ", ".join(x for x in (city, region) if x) or "地點未定"
+
+
 def conference_cards(rows: list[dict], today: date) -> str:
     """
     ACEP 官網 Future Dates 的卡片版型：色塊、標題、行事曆圖示＋日期、
@@ -575,9 +610,9 @@ def conference_cards(rows: list[dict], today: date) -> str:
             when = str(r["year"])
         else:
             when = html.escape(r.get("date_text") or "日期未定")
-        place = ", ".join(x for x in (r.get("city"), r.get("country_or_state")) if x) or "地點未定"
+        place = card_place(r)
         tba = "" if r["_confirmed"] or past else " tba"     # 已結束的不再標虛線
-        tag = "<span class='done'>暫定</span>" if tba else ""
+        tag = "<span class='done'>日期未定</span>" if tba else ""
         cards.append(
             f'<a class="card{" past" if past else ""}{tba}" '
             f'href="{html.escape(r.get("source_url",""))}">'
