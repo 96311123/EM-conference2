@@ -124,11 +124,21 @@ def load_health() -> dict:
     return {}
 
 
-def classify_failures(failed: list[str], health: dict, today: date
-                      ) -> tuple[list[str], list[str]]:
-    """把失敗的學會分成『退步』（要修）與『已知』（只提示）。"""
+def classify_failures(failed: list[str], health: dict, today: date,
+                      blocked: set[str] | None = None) -> tuple[list[str], list[str]]:
+    """
+    把失敗的學會分成『退步』（要修）與『已知』（只提示）。
+
+    被官網防爬擋下的（blocked）一律算已知：AHA、IFEM 會時好時壞地回 403，
+    偶爾抓得到一次就會被健康紀錄當成「原本正常」，下次被擋又誤報成退步、
+    讓整個 workflow 失敗寄信。被擋不是程式能修的問題，備援資料會頂上。
+    """
     regressions, known = [], []
+    blocked = blocked or set()
     for society in failed:
+        if society in blocked:
+            known.append(f"{society}：官網擋自動抓取，本次使用備援或上次資料")
+            continue
         last = health.get(society)
         if not last:
             known.append(f"{society}：從未成功抓取過")
@@ -440,12 +450,15 @@ def main() -> int:
         gap_notes.extend(dropped)
         deadlines, warnings, changes, dl_changes = old_dl, [], [], []
         ok_societies = set()
+        blocked: set[str] = set()
     else:
         fresh = [asdict(c) for c in scrape()] + [asdict(c) for c in scrape_asia()]
         # 補漏來源依可靠度排序：ACEP 官方當屆頁給完整區間，優先於
         # TSEM 只有開始日期的列表。fill_gaps 只填空缺，先到先得。
         supplement = ([asdict(c) for c in scrape_acep_current()]
                       + [asdict(c) for c in scrape_tsem()])
+        blocked = {r["society"] for r in fresh if r.get("name") == "(fetch failed)"
+                   and (r.get("note") or "").startswith("BLOCKED: ")}
         fresh, gap_notes = fill_gaps(fresh, supplement)
         ok_societies = {r["society"] for r in fresh if r.get("name") != "(fetch failed)"}
         fresh, manual_notes = apply_manual(fresh)
@@ -481,7 +494,7 @@ def main() -> int:
                       encoding="utf-8")
 
     failed = [w.split("：")[0] for w in warnings]
-    regressions, known_issues = classify_failures(failed, health, date.today())
+    regressions, known_issues = classify_failures(failed, health, date.today(), blocked)
 
     archive, n_new = update_archive(load_archive(), merged, ok_societies, date.today())
     ARCHIVE.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")

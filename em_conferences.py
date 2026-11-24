@@ -95,6 +95,13 @@ class Conference:
 # 共用工具
 # --------------------------------------------------------------------------
 
+class BlockedError(RuntimeError):
+    """網站刻意擋自動抓取（403、瀏覽器驗證頁）。不是程式或官網版面的問題。"""
+
+
+BLOCKED_TAG = "BLOCKED: "
+
+
 def fetch_text(url: str, session: requests.Session | None = None) -> str:
     """
     抓網頁 → 轉成乾淨的純文字（每個 block 一行）。
@@ -116,10 +123,16 @@ def fetch_text(url: str, session: requests.Session | None = None) -> str:
         except Exception:
             pass
 
-    # AWS WAF 之類的瀏覽器驗證頁：回 202 或 403 加一段 JS 挑戰，沒有實際內容。
-    # 這是對方明確的防爬設定，不嘗試繞過，直接當成抓取失敗，交給備援資料。
-    if "awsWafCookieDomainList" in r.text or "challenge-platform" in r.text:
-        raise RuntimeError(f"被網站的瀏覽器驗證擋下（HTTP {r.status_code}）")
+    # 對方明確的防爬設定（AWS WAF／Cloudflare 驗證頁、403）：不嘗試繞過，
+    # 丟 BlockedError 交給備援資料。跟「官網改版、解析不到」分開，
+    # 這樣 AHA、IFEM 這種時好時壞的擋法不會每次都被當成需要修的退步。
+    challenge = ("awsWafCookieDomainList" in r.text
+                 or ("challenge-platform" in r.text
+                     and (r.status_code != 200 or len(r.text) < 20000)))
+    if challenge:
+        raise BlockedError(f"被網站的瀏覽器驗證擋下（HTTP {r.status_code}）")
+    if r.status_code == 403:
+        raise BlockedError("網站拒絕自動抓取（HTTP 403）")
     r.raise_for_status()
     r.encoding = r.apparent_encoding or r.encoding
     return html_to_text(r.text)
@@ -636,8 +649,9 @@ def scrape(only: Iterable[str] | None = None) -> list[Conference]:
             results.extend(got)
         except Exception as exc:                      # 單一站失敗不影響其他站
             print(f"[error] {society}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            tag = BLOCKED_TAG if isinstance(exc, BlockedError) else ""
             results.append(Conference(society=society, name="(fetch failed)",
-                                      source_url=url, note=str(exc)))
+                                      source_url=url, note=tag + str(exc)))
     results.sort(key=lambda c: (c.start or "9999", c.society))
     return results
 
