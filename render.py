@@ -53,9 +53,9 @@ SOCIETY_META = {
               "meeting": "年會（六月最後一週週五、六）", "hue": "tsem"},
 }
 
-# 有 logo 圖檔（docs/assets/<hue>.png）的學會；AAEMS 暫用文字徽章，
-# 之後把 logo 放進 docs/assets 並加到這裡即可。
-HAS_LOGO = {"acep", "saem", "ifem", "eusem", "asem", "sems", "hkcem", "erc", "aha", "tsem"}
+# 有 logo 圖檔（docs/assets/<hue>.png）的學會；新學會把 logo 放進 docs/assets 並加到這裡即可。
+HAS_LOGO = {"acep", "saem", "ifem", "eusem", "asem", "sems", "hkcem", "erc", "aha", "tsem",
+            "aaems"}
 
 # 地圖旗子另用精簡版圖示（docs/assets/<hue>-flag.png）的學會：
 # 卡片放完整 logo（含文字），旗面太小只放符號。
@@ -326,7 +326,7 @@ CSS = """
   --rule:#c6d1d6; --rule-soft:#dde5e8;
   --acep:#9d3a2e; --saem:#2f6a56; --ifem:#8a6820; --eusem:#33518c;
   --asem:#5c4b8a; --hkcem:#a8562b; --sems:#1f6f78;
-  --erc:#2b74ad; --aha:#c4283c; --aaems:#5f6f1c; --tsem:#2c3e95;
+  --erc:#2b74ad; --aha:#c4283c; --aaems:#d4601a; --tsem:#2c3e95;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -420,7 +420,7 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .card .meta .place{color:var(--ink)}
 .card.past{opacity:.5}
 .card.tba .band{border-style:dashed; border-color:#9aa9b0}
-.card .done{font-size:.72rem; border:1px solid var(--rule); padding:0 .3rem;
+.card .done{font-size:.72rem; white-space:nowrap; display:inline-block; border:1px solid var(--rule); padding:0 .3rem;
   margin-left:.4rem; color:var(--muted); font-weight:400}
 .card.past .band img{filter:grayscale(1)}
 
@@ -709,7 +709,7 @@ US_STATES = {
 SOCIETY_HEX = {"ACEP": "#9d3a2e", "SAEM": "#2f6a56", "IFEM": "#8a6820",
                "EUSEM": "#33518c", "ASEM": "#5c4b8a", "HKCEM": "#a8562b",
                "SEMS": "#1f6f78", "ERC": "#2b74ad", "AHA": "#c4283c",
-               "AAEMS": "#5f6f1c", "TSEM": "#2c3e95"}
+               "AAEMS": "#d4601a", "TSEM": "#2c3e95"}
 
 CONTINENTS = [("NORTH AMERICA", 47, -103), ("SOUTH AMERICA", -33, -66),
               ("EUROPE", 52, 18), ("AFRICA", 6, 20), ("ASIA", 54, 92),
