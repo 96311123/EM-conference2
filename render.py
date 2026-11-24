@@ -750,7 +750,7 @@ def map_place(r: dict) -> str:
 
 
 def map_when(r: dict) -> str:
-    """『May 18 – 21, 2027』；日期未定時寫『June 2027 (date TBA)』。"""
+    """『May 18 – 21, 2027』；日期未定時寫『Jun 2027（暫定）』。"""
     s, e = r["_start"], r["_end"]
     if s and e:
         tent = "" if r["_confirmed"] else "（暫定）"
@@ -760,7 +760,7 @@ def map_when(r: dict) -> str:
             return f"{MON[s.month-1]} {s.day} – {e.day}, {s.year}{tent}"
         return f"{MON[s.month-1]} {s.day} – {MON[e.month-1]} {e.day}, {e.year}{tent}"
     m = r.get("_month")
-    return f"{MON[m-1]} {r.get('year')} (date TBA)" if m else f"{r.get('year')} (date TBA)"
+    return f"{MON[m-1]} {r.get('year')}（暫定）" if m else f"{r.get('year')}（暫定）"
 
 
 def _text_w(s: str, size: float) -> float:
