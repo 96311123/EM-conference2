@@ -739,14 +739,14 @@ def coords_for(r: dict) -> tuple[float, float] | None:
 
 
 def map_place(r: dict) -> str:
-    """『Boston, USA』『Kuala Lumpur, Malaysia』這種短地名。"""
+    """『Boston, USA』『Kuala Lumpur, Malaysia』這種短地名；沒有地點寫『地點未定』。"""
     city = (r.get("city") or "").strip()
     region = (r.get("country_or_state") or "").strip()
     if region.lower() in US_STATES:
         region = "USA"
     if region and region.lower() != city.lower():
         return f"{city}, {region}" if city else region
-    return city or "Location TBA"
+    return city or "地點未定"
 
 
 def map_when(r: dict) -> str:
