@@ -152,6 +152,12 @@ def strip_html(s: str) -> str:
     return re.sub(r"\s+", " ", _html.unescape(s)).strip()
 
 
+OWN_EVENT = {
+    "SEMS": re.compile(r"\bSEMS\b", re.I),
+    "HKCEM": re.compile(r"\bSSEM\b|\bHKCEM\b|scientific symposium", re.I),
+}
+
+
 def parse_wp_conferences(posts: list[dict], society: str, fallback_url: str,
                          note: str) -> list[Conference]:
     """從貼文標題與摘要裡篩出像年會的項目並抽出日期。"""
@@ -162,17 +168,27 @@ def parse_wp_conferences(posts: list[dict], society: str, fallback_url: str,
         blob = f"{title} {excerpt}"
         if not CONF_WORDS.search(blob) or NOISE_WORDS.search(title):
             continue
+        # 只收學會自己的年會。SEMS 官網常轉貼別的學會的會議（阿聯酋 ESEM、
+        # 布達佩斯 MEMC、ACEM、Women in EM 線上研討會…），標題沒提到自己就略過。
+        own = OWN_EVENT.get(society)
+        if own and not own.search(title):
+            continue
         post_year = int((p.get("date") or "0000")[:4]) or None
         start, end, raw = parse_date_range(blob, default_year=post_year)
         if not start:
             continue
         is_ssem = re.search(r"\bSSEM\b|scientific symposium", blob, re.I)
+        if is_ssem and society == "HKCEM":
+            name, city = f"Scientific Symposium on Emergency Medicine (SSEM {start[:4]})", "Hong Kong"
+        elif society == "SEMS":
+            # 貼文標題是「Sign up for SEMS 2023 …now!」這類報名公告，統一成會議名稱
+            name, city = f"SEMS Annual Scientific Meeting {start[:4]}", "Singapore"
+        else:
+            name, city = title[:110], ""
         out.append(Conference(
-            society=society,
-            name=(f"Scientific Symposium on Emergency Medicine (SSEM {start[:4]})"
-                  if is_ssem and society == "HKCEM" else title[:110]),
+            society=society, name=name,
             year=int(start[:4]), date_text=raw, start=start, end=end,
-            city="Hong Kong" if is_ssem and society == "HKCEM" else "",
+            city=city,
             source_url=SSEM_SITE if (is_ssem and society == "HKCEM")
                        else (p.get("link") or fallback_url),
             note=note))

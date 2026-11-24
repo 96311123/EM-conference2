@@ -144,38 +144,12 @@
   },
   {
     "society": "SEMS",
-    "name": "Women in Emergency Medicine Around the World Virtual Symposium 16 Dec 2021",
-    "year": 2021,
-    "date_text": "16 Dec 2021",
-    "start": "2021-12-16",
-    "end": "2021-12-16",
-    "city": "",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://sems-online.com/2021/11/23/women-in-emergency-medicine-around-the-world-virtual-symposium-16-dec-2021/",
-    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
-  },
-  {
-    "society": "SEMS",
-    "name": "Emirates Society of Emergency Medicine ESEM 22 from 7 to 10 Dec 2022",
-    "year": 2022,
-    "date_text": "10 Dec 2022",
-    "start": "2022-12-10",
-    "end": "2022-12-10",
-    "city": "",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://sems-online.com/2022/08/15/emirates-society-of-emergency-medicine-esem-22-from-7-to-10-dec-2022/",
-    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
-  },
-  {
-    "society": "SEMS",
-    "name": "Sign up for SEMS 2023 25-25 Feb 2023 now!",
+    "name": "SEMS Annual Scientific Meeting 2023",
     "year": 2023,
     "date_text": "25-25 Feb 2023",
     "start": "2023-02-25",
     "end": "2023-02-25",
-    "city": "",
+    "city": "Singapore",
     "country_or_state": "",
     "venue": "",
     "source_url": "https://sems-online.com/2022/10/08/sign-up-for-sems-2023-25-25-feb-2023-now/",
@@ -195,19 +169,6 @@
     "note": "ACEM 兩年一次"
   },
   {
-    "society": "SEMS",
-    "name": "Emirates Society of Emergency Medicine ESEM 24 from 11-14 Dec 2024",
-    "year": 2024,
-    "date_text": "11-14 Dec 2024",
-    "start": "2024-12-11",
-    "end": "2024-12-14",
-    "city": "",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://sems-online.com/2024/05/07/emirates-society-of-emergency-medicine-esem-24-from-11-14-dec-2024/",
-    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
-  },
-  {
     "society": "AAEMS",
     "name": "7th EMS Asia Conference 2025",
     "year": 2025,
@@ -224,28 +185,15 @@
   },
   {
     "society": "SEMS",
-    "name": "SEMS ASM 2025 early bird registration has begun!",
+    "name": "SEMS Annual Scientific Meeting 2025",
     "year": 2025,
     "date_text": "27-28 Feb 2025",
     "start": "2025-02-27",
     "end": "2025-02-28",
-    "city": "",
+    "city": "Singapore",
     "country_or_state": "",
     "venue": "",
     "source_url": "https://sems-online.com/2024/08/02/sems-asm-2025-early-bird-registration-has-begun/",
-    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
-  },
-  {
-    "society": "SEMS",
-    "name": "Get ready for MEMC25 in Budapest from 14-17 Aug 2025!",
-    "year": 2025,
-    "date_text": "14-17 Aug 2025",
-    "start": "2025-08-14",
-    "end": "2025-08-17",
-    "city": "",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://sems-online.com/2025/05/25/get-ready-for-memc25-in-budapest-from-14-17-aug-2025/",
     "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
   },
   {
@@ -262,19 +210,6 @@
     "note": "ACEM 兩年一次"
   },
   {
-    "society": "SEMS",
-    "name": "Sign up for ACEM 2025 10-13 Dec now!",
-    "year": 2025,
-    "date_text": "10-13 Dec ",
-    "start": "2025-12-10",
-    "end": "2025-12-13",
-    "city": "",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://sems-online.com/2025/07/05/sign-up-for-acem-2025-10-13-dec-now/",
-    "note": "取自 SEMS 網站貼文（sems-asm／conference 分類），信心中等，建議人工確認"
-  },
-  {
     "society": "ERC",
     "name": "ERC Congress – Resuscitation 2026",
     "year": 2026,
@@ -286,34 +221,6 @@
     "venue": "",
     "source_url": "https://www.erc.edu/events/congress/general-information/",
     "note": ""
-  },
-  {
-    "society": "ACEP",
-    "name": "ACEP26 Scientific Assembly",
-    "year": 2026,
-    "date_text": "October 5-8, 2026",
-    "start": "2026-10-05",
-    "end": "2026-10-08",
-    "city": "Chicago",
-    "country_or_state": "Illinois",
-    "venue": "",
-    "source_url": "https://www.acep.org/acep26",
-    "note": "人工確認；ACEP 的 Future Dates 頁只列明年以後，不含當屆",
-    "manual": true
-  },
-  {
-    "society": "HKCEM",
-    "name": "Scientific Symposium on Emergency Medicine (SSEM 2026)",
-    "year": 2026,
-    "date_text": "30-31 October 2026",
-    "start": "2026-10-30",
-    "end": "2026-10-31",
-    "city": "Hong Kong",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://www.ssem.hk/index",
-    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表與 HKSCCM 公告",
-    "manual": true
   },
   {
     "society": "AHA",
@@ -357,20 +264,6 @@
     "venue": "San Francisco Marriott Marquis",
     "source_url": "https://www.saem.org/meetings-and-events/future-meetings",
     "note": ""
-  },
-  {
-    "society": "IFEM",
-    "name": "26th IFEM Global Congress on Emergency Medicine (IFEM2027)",
-    "year": 2027,
-    "date_text": "June 10-14, 2027",
-    "start": "2027-06-10",
-    "end": "2027-06-14",
-    "city": "Kuala Lumpur",
-    "country_or_state": "Malaysia",
-    "venue": "",
-    "source_url": "https://www.ifem.cc/ifem2027",
-    "note": "人工確認；IFEM 官網活動頁 ifem.cc/ifem2027 已公布日期與城市，about_congress 頁只寫 JUNE 2027",
-    "manual": true
   },
   {
     "society": "TSEM",
@@ -546,36 +439,6 @@
     "note": ""
   },
   {
-    "society": "AAEMS",
-    "name": "EMS Asia Conference 2027",
-    "year": 2027,
-    "date_text": "2027（日期、地點未公布）",
-    "start": "",
-    "end": "",
-    "city": "",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://emsasia.org/",
-    "tentative": true,
-    "note": "暫定場次：AAEMS 的 EMS Asia 下一屆尚未公布（2025 泰國華欣二月、2026 新加坡十一月）。公布後請更新本筆。",
-    "manual": true
-  },
-  {
-    "society": "HKCEM",
-    "name": "Scientific Symposium on Emergency Medicine (SSEM 2027)",
-    "year": 2027,
-    "date_text": "2027 年 10 月（預計，日期未公布）",
-    "start": "",
-    "end": "",
-    "city": "Hong Kong",
-    "country_or_state": "",
-    "venue": "",
-    "source_url": "https://www.ssem.hk/index",
-    "tentative": true,
-    "note": "暫定場次：SSEM 每年十月底舉行，2027 年日期尚未公布。爬蟲一抓到正式日期就會自動取代這筆。",
-    "manual": true
-  },
-  {
     "society": "IFEM",
     "name": "27th IFEM Global Congress on Emergency Medicine",
     "year": 2028,
@@ -602,6 +465,63 @@
     "note": "Host: Irish Association for Emergency Medicine (IAEM) ｜ 本次擷取失敗，沿用上次結果"
   },
   {
+    "society": "ACEP",
+    "name": "ACEP26 Scientific Assembly",
+    "year": 2026,
+    "date_text": "October 5-8, 2026",
+    "start": "2026-10-05",
+    "end": "2026-10-08",
+    "city": "Chicago",
+    "country_or_state": "Illinois",
+    "venue": "",
+    "source_url": "https://www.acep.org/acep26",
+    "note": "人工確認；ACEP 的 Future Dates 頁只列明年以後，不含當屆",
+    "manual": true
+  },
+  {
+    "society": "HKCEM",
+    "name": "Scientific Symposium on Emergency Medicine (SSEM 2026)",
+    "year": 2026,
+    "date_text": "30-31 October 2026",
+    "start": "2026-10-30",
+    "end": "2026-10-31",
+    "city": "Hong Kong",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ssem.hk/index",
+    "note": "人工確認；ssem.hk 禁止自動擷取，日期核對自台灣急診醫學會國際學術活動列表與 HKSCCM 公告",
+    "manual": true
+  },
+  {
+    "society": "IFEM",
+    "name": "26th IFEM Global Congress on Emergency Medicine (IFEM2027)",
+    "year": 2027,
+    "date_text": "June 10-14, 2027",
+    "start": "2027-06-10",
+    "end": "2027-06-14",
+    "city": "Kuala Lumpur",
+    "country_or_state": "Malaysia",
+    "venue": "",
+    "source_url": "https://www.ifem.cc/ifem2027",
+    "note": "人工確認；IFEM 官網活動頁 ifem.cc/ifem2027 已公布日期與城市，about_congress 頁只寫 JUNE 2027",
+    "manual": true
+  },
+  {
+    "society": "HKCEM",
+    "name": "Scientific Symposium on Emergency Medicine (SSEM 2027)",
+    "year": 2027,
+    "date_text": "2027 年 10 月（預計，日期未公布）",
+    "start": "",
+    "end": "",
+    "city": "Hong Kong",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://www.ssem.hk/index",
+    "tentative": true,
+    "note": "暫定場次：SSEM 每年十月底舉行，2027 年日期尚未公布。爬蟲一抓到正式日期就會自動取代這筆。",
+    "manual": true
+  },
+  {
     "society": "SEMS",
     "name": "SEMS Annual Scientific Meeting 2027",
     "year": 2027,
@@ -614,6 +534,21 @@
     "source_url": "https://sems-online.com/category/sems-asm/",
     "tentative": true,
     "note": "暫定場次：SEMS ASM 兩年一次（2023、2025 皆在二月），2027 年日期尚未公布。爬蟲一抓到正式日期就會自動取代這筆。",
+    "manual": true
+  },
+  {
+    "society": "AAEMS",
+    "name": "EMS Asia Conference 2027",
+    "year": 2027,
+    "date_text": "2027（日期、地點未公布）",
+    "start": "",
+    "end": "",
+    "city": "",
+    "country_or_state": "",
+    "venue": "",
+    "source_url": "https://emsasia.org/",
+    "tentative": true,
+    "note": "暫定場次：AAEMS 的 EMS Asia 下一屆尚未公布（2025 泰國華欣二月、2026 新加坡十一月）。公布後請更新本筆。",
     "manual": true
   }
 ]

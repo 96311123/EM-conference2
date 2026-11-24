@@ -1,7 +1,7 @@
 # 急診國際年會自動追蹤
 
 每週自動整理急診醫學重要國際會議的**日期地點**與**摘要投稿死線**——ACEP、SAEM、
-ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、SEMS、HKCEM、AAEMS 與台灣急診醫學會——
+ERC、AHA ReSS、ICEM（IFEM）、EUSEM、ASEM、SEMS、HKCEM、AAEMS 與台灣急診醫學會——
 產出附世界地圖的儀表板與歷屆會議頁、一個帶提醒的行事曆，以及 CSV／JSON。
 
 網站：https://96311123.github.io/EM-conference2/
@@ -11,7 +11,7 @@ ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、SEMS、HKCEM、AAEMS 與台灣�
 | ACEP | Scientific Assembly | 專屬 Future Dates 頁，列到 2032 | 高 |
 | SAEM | Annual Meeting | 專屬 Future Meetings 頁 | 高 |
 | IFEM | Global Congress / ICEM | about_congress 頁 | 高 |
-| EuSEM | European EM Congress | eusemcongress.org | 中 |
+| EUSEM | European EM Congress | eusemcongress.org | 中 |
 | ASEM | Asian Conference（ACEM，兩年一次） | events 頁列 1–14 屆 | 高 |
 | SEMS | Annual Scientific Meeting | WordPress REST API 篩貼文 | 中 |
 | HKCEM | 學術活動 | WordPress REST API 篩貼文 | 低 |
@@ -23,7 +23,7 @@ ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、SEMS、HKCEM、AAEMS 與台灣�
 ## 檔案
 
 ```
-em_conferences.py    ACEP／SAEM／IFEM／EuSEM 的年會爬蟲
+em_conferences.py    ACEP／SAEM／IFEM／EUSEM 的年會爬蟲
 asia_societies.py    ASEM／SEMS／HKCEM 的年會爬蟲
 deadlines.py         摘要投稿死線的爬蟲（四個學會各一套解析策略）
 render.py            產生儀表板 HTML 與 .ics 行事曆
@@ -93,7 +93,7 @@ issue 列出差異，GitHub 寄信給你，信裡開頭就是 30 天內的死線
 | 等級 | 意義 | 適用 |
 |---|---|---|
 | 高 | 頁面有明確的「Submissions Close: 日期」欄位 | SAEM |
-| 中 | 從固定句型的敘述句抽取 | EuSEM |
+| 中 | 從固定句型的敘述句抽取 | EUSEM |
 | 低 | 從自由文字猜的，務必人工確認 | ACEP、IFEM |
 
 低信心的項目會在儀表板標記，也不會設行事曆提醒。寧可少提醒一次，也不要
@@ -126,7 +126,7 @@ congress 官網每年換網域（icem2026.com → ifem2027.my ...），所以程
 | SAEM27 | Innovations／IGNITE! | 2026-11-09 | 高 |
 | SAEM27 | Abstracts | 2027-01-05（11/2 開放） | 高 |
 | SAEM27 | Clinical Images | 2027-01-12 | 高 |
-| EuSEM | Late-breaking Abstracts | 未公布 | — |
+| EUSEM | Late-breaking Abstracts | 未公布 | — |
 | ACEP27 | Research Forum | 未公布（往例約 3 月開放、6 月截止） | — |
 | IFEM | Abstracts | 未公布（會期前 8–10 個月） | — |
 
@@ -135,7 +135,7 @@ congress 官網每年換網域（icem2026.com → ifem2027.my ...），所以程
 | 學會 | 場次 | 日期 | 地點 |
 |---|---|---|---|
 | IFEM | 25th ICEM | 2026-06-09 – 06-13 | Hamburg, Germany |
-| EuSEM | EUSEM 2026 | 2026-09-25 – 09-27 | Paris |
+| EUSEM | EUSEM 2026 | 2026-09-25 – 09-27 | Paris |
 | SAEM | SAEM27 | 2027-05-18 – 05-21 | San Francisco, CA |
 | IFEM | 26th Global Congress | JUNE 2027（未定） | Malaysia |
 | ACEP | ACEP27 | 2027-10-25 – 10-28 | Boston, MA |

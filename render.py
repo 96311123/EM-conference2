@@ -4,7 +4,7 @@
 render.py — 把爬到的年會資料算成 (1) 一頁儀表板 HTML (2) 一個 .ics 行事曆檔。
 
 儀表板的主角是「季節格線」：橫軸十二個月、縱軸年份，一眼就看得出
-四大學會的年度節奏（SAEM 五月、IFEM 六月、EuSEM 九月底、ACEP 十月），
+四大學會的年度節奏（SAEM 五月、IFEM 六月、EUSEM 九月底、ACEP 十月），
 這正是排投稿死線與出國預算時真正需要知道的事。
 """
 
@@ -26,7 +26,7 @@ SOCIETY_META = {
               "meeting": "Annual Meeting", "hue": "saem"},
     "IFEM":  {"full": "International Federation for Emergency Medicine",
               "zh": "國際急診醫學聯盟",
-              "meeting": "Global Congress / ICEM", "hue": "ifem"},
+              "meeting": "ICEM 國際急診醫學大會", "hue": "ifem"},
     "EUSEM": {"full": "European Society for Emergency Medicine",
               "zh": "歐洲急診醫學會",
               "meeting": "European EM Congress", "hue": "eusem"},
@@ -34,11 +34,11 @@ SOCIETY_META = {
               "zh": "亞洲急診醫學會",
               "meeting": "Asian Conference（ACEM，兩年一次）", "hue": "asem"},
     "SEMS":  {"full": "Society for Emergency Medicine in Singapore",
-              "zh": "新加坡急診",
+              "zh": "新加坡急診醫學會",
               "meeting": "Annual Scientific Meeting", "hue": "sems"},
     "HKCEM": {"full": "Hong Kong College of Emergency Medicine",
               "zh": "香港急症科醫學院",
-              "meeting": "學術活動", "hue": "hkcem"},
+              "meeting": "SSEM（Scientific Symposium on Emergency Medicine）", "hue": "hkcem"},
     "ERC":   {"full": "European Resuscitation Council",
               "zh": "歐洲復甦委員會",
               "meeting": "ERC Congress – Resuscitation", "hue": "erc"},
@@ -50,7 +50,7 @@ SOCIETY_META = {
               "meeting": "EMS Asia Conference（院前救護）", "hue": "aaems"},
     "TSEM":  {"full": "Taiwan Society of Emergency Medicine",
               "zh": "台灣急診醫學會",
-              "meeting": "年會（六月最後一週週五、六）", "hue": "tsem"},
+              "meeting": "年會（六月）／冬季學術討論會（十一月）", "hue": "tsem"},
 }
 
 # 有 logo 圖檔（docs/assets/<hue>.png）的學會；新學會把 logo 放進 docs/assets 並加到這裡即可。
@@ -421,7 +421,7 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .card .meta svg{flex:0 0 auto; width:.9rem; height:.9rem; margin-top:.22rem}
 .card .meta .place{color:var(--ink)}
 .card.past{opacity:.5}
-.lede{margin:.2rem 0 0; color:var(--muted); font-size:.95rem; line-height:1.6; max-width:52rem}
+.intro{margin:.2rem 0 0; color:var(--muted); font-size:.95rem; line-height:1.6; max-width:52rem}
 .card.tba .band{border-style:dashed; border-color:#9aa9b0}
 .card .done{font-size:.72rem; white-space:nowrap; display:inline-block; border:1px solid var(--rule); padding:0 .3rem;
   margin-left:.4rem; color:var(--muted); font-weight:400}
@@ -454,6 +454,7 @@ td.when{white-space:nowrap}
 .dl li.urgent .left{color:#a3251c} .dl li.urgent .left b{font-size:1.25rem}
 .dl li.soon .left{color:#8a5a11}
 .dl li.tba .when,.dl li.tba .left{color:var(--muted); font-style:italic}
+.dl li.closed{opacity:.45}
 .dl .flag{font-size:.72rem; color:var(--muted); border:1px solid var(--rule);
   padding:0 .3rem; margin-left:.4rem; white-space:nowrap}
 .dl .note{margin:.7rem 0 0; font-size:.8rem; color:var(--muted)}
@@ -511,13 +512,17 @@ def deadline_section(deadlines: list[dict], today: date) -> str:
 
     live.sort(key=lambda x: x[0])
     if not live and not tba:
-        return ('<div class="dl"><p class="note">目前四個學會都沒有開放中的投稿。'
+        return ('<div class="dl"><p class="note">目前各學會都沒有開放中的投稿。'
                 '死線一公布就會出現在這裡。</p></div>')
+
+    def track_of(d):
+        t = d.get("track") or ""
+        return TRACK_ZH.get(t) or t or "摘要投稿"
 
     items = []
     for left, d in live:
         cls = "urgent" if left <= 7 else ("soon" if left <= 30 else "")
-        track = TRACK_ZH.get(d.get("track", ""), d.get("track", "投稿"))
+        track = track_of(d)
         flag = CONF_ZH.get(d.get("confidence", "low"), "")
         flag_html = f'<span class="flag">{flag}</span>' if flag else ""
         items.append(
@@ -526,15 +531,22 @@ def deadline_section(deadlines: list[dict], today: date) -> str:
             f'<span class="what"><b>{html.escape(society_label(d.get("society","")))} · '
             f'{html.escape(track)}</b>{flag_html}'
             f'<span>{html.escape(d.get("cycle") or "")}</span></span>'
-            f'<span class="left"><b>{left}</b> 天</span></li>')
+            f'<span class="left" data-deadline="{d["date_iso"]}"><b>{left}</b> 天</span></li>')
 
     for d in tba:
-        track = TRACK_ZH.get(d.get("track", ""), d.get("track", "投稿"))
+        track = track_of(d)
+        note = d.get("note") or d.get("cycle") or ""
+        # 擷取失敗的技術訊息（HTTPError…）不給讀者看，改成一句話＋官網連結
+        if note.startswith("擷取失敗") or "Error" in note:
+            note = "暫時無法自動取得投稿資訊，請見"
+        url = d.get("source_url") or ""
+        link = (f' <a href="{html.escape(url)}" target="_blank" rel="noopener">官網</a>'
+                if url else "")
         items.append(
             f'<li class="tba"><span class="when">未公布</span>'
             f'<span class="what"><b>{html.escape(society_label(d.get("society","")))} · '
             f'{html.escape(track)}</b>'
-            f'<span>{html.escape(d.get("note") or d.get("cycle") or "")[:70]}</span></span>'
+            f'<span>{html.escape(note)}{link}</span></span>'
             f'<span class="left">—</span></li>')
 
     return ('<div class="dl"><ol>' + "".join(items) + "</ol>"
@@ -579,6 +591,9 @@ CITY_STATES = {"hong kong", "singapore"}    # 城市即國家／地區，不再�
 
 def card_place(r: dict) -> str:
     """卡片上的地點：美國一律『城市, 州縮寫』（Boston, MA），其他『城市, 國家』。"""
+    if is_online(r):
+        host = (r.get("city") or "").strip()
+        return f"線上會議（主辦地：{host}）" if host else "線上會議"
     city = (r.get("city") or "").strip()
     region = (r.get("country_or_state") or "").strip()
     region = STATE_ABBR.get(region.lower(), region)
@@ -605,9 +620,9 @@ def conference_cards(rows: list[dict], today: date) -> str:
             when = (r["_start"].isoformat() if r["_start"] == r["_end"]
                     else f'{r["_start"].isoformat()} – {r["_end"].isoformat()}')
         elif r.get("_month") and r.get("year"):
-            when = f'{r["year"]}-{r["_month"]:02d}'
+            when = f'{r["year"]}-{r["_month"]:02d}' + ("（日期不詳）" if past else "")
         elif r.get("year"):
-            when = str(r["year"])
+            when = str(r["year"]) + ("（日期不詳）" if past else "")
         else:
             when = html.escape(r.get("date_text") or "日期未定")
         place = card_place(r)
@@ -644,11 +659,14 @@ def season_grid(rows: list[dict], today: date) -> str:
             hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
             past = " past" if is_past(r, today) else ""
             tba = "" if r["_confirmed"] else " tba"
-            when = (f'{r["_start"].month}/{r["_start"].day}–'
-                    f'{r["_end"].month}/{r["_end"].day}') if r["_start"] else "日期未定"
-            if r["_start"] and not r["_confirmed"]:
-                when += "（暫定）"
-            place = r.get("city") or r.get("country_or_state") or "—"
+            if r["_start"]:
+                when = (f'{r["_start"].month}/{r["_start"].day}' if r["_start"] == r["_end"]
+                        else f'{r["_start"].month}/{r["_start"].day}–{r["_end"].month}/{r["_end"].day}')
+                if not r["_confirmed"]:
+                    when += "（日期未定）"
+            else:
+                when = "日期不詳" if is_past(r, today) else "日期未定"
+            place = card_place(r)
             cells.append(
                 f'<div class="bar {hue}{past}{tba}" '
                 f'style="grid-column:{m + 1};grid-row:{lanes[_key(r)] + 1}" '
@@ -791,21 +809,15 @@ def coords_for(r: dict) -> tuple[float, float] | None:
 
 
 def map_place(r: dict) -> str:
-    """『Boston, USA』『Kuala Lumpur, Malaysia』這種短地名；沒有地點寫『地點未定』。"""
-    city = (r.get("city") or "").strip()
-    region = (r.get("country_or_state") or "").strip()
-    if region.lower() in US_STATES:
-        region = "USA"
-    if region and region.lower() != city.lower():
-        return f"{city}, {region}" if city else region
-    return city or "地點未定"
+    """地圖、下方清單用的地名，跟卡片同一種寫法（Boston, MA／Glasgow, United Kingdom）。"""
+    return card_place(r)
 
 
 def map_when(r: dict) -> str:
-    """『May 18 – 21, 2027』；日期未定時寫『Jun 2027（暫定）』。"""
+    """『May 18 – 21, 2027』；日期未定時寫『Jun 2027（日期未定）』。"""
     s, e = r["_start"], r["_end"]
     if s and e:
-        tent = "" if r["_confirmed"] else "（暫定）"
+        tent = "" if r["_confirmed"] else "（日期未定）"
         if s == e:
             return f"{MON[s.month-1]} {s.day}, {s.year}{tent}"
         if s.month == e.month:
@@ -814,7 +826,7 @@ def map_when(r: dict) -> str:
     m = r.get("_month")
     y = r.get("year")
     # 已經過去、只知道年份的歷史場次（例如 ICEM 2016 開普敦）就只寫年份，不標暫定
-    tent = "（暫定）" if r.get("tentative") or (y and y >= date.today().year) else ""
+    tent = "（日期未定）" if r.get("tentative") or (y and y >= date.today().year) else "（日期不詳）"
     return f"{MON[m-1]} {y}{tent}" if m else f"{y}{tent}"
 
 
@@ -1286,7 +1298,8 @@ def render_html(rows: list[dict], today: date, generated: str,
 
     # --- Hero ---
     if nxt:
-        place = ", ".join(x for x in (nxt.get("city"), nxt.get("country_or_state")) if x)
+        place = card_place(nxt)
+        days0 = max((nxt["_start"] - today).days, 0)
         hero = (
             '<section class="hero">'
             '<p class="lede">下一場</p>'
@@ -1294,11 +1307,12 @@ def render_html(rows: list[dict], today: date, generated: str,
             f'<p class="meta">{nxt["_start"].isoformat()}'
             f'{"" if nxt["_start"] == nxt["_end"] else " – " + nxt["_end"].isoformat()}'
             f'{"　·　" + html.escape(place) if place else ""}</p>'
-            f'<p class="count" data-start="{nxt["_start"].isoformat()}">'
-            f'<b>—</b> 天後開幕</p></section>')
+            f'<p class="count" data-start="{nxt["_start"].isoformat()}" '
+            f'data-end="{nxt["_end"].isoformat()}">'
+            f'<b>{days0}</b> 天後開幕</p></section>')
     else:
         hero = ('<section class="hero"><p class="lede">下一場</p>'
-                '<p class="title">四個學會目前都沒有公布未來場次。</p>'
+                '<p class="title">各學會目前都沒有公布未來場次。</p>'
                 '<p class="meta">下次自動更新時會重新檢查。</p></section>')
 
     return f"""<!DOCTYPE html>
@@ -1307,11 +1321,11 @@ def render_html(rows: list[dict], today: date, generated: str,
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>急診國際年會追蹤</title>
-<meta name="description" content="急診醫學國際會議一站整理：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。">
+<meta name="description" content="急診醫學國際會議一站整理：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EUSEM、ASEM、台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="急診國際年會追蹤">
 <meta property="og:title" content="急診國際年會追蹤">
-<meta property="og:description" content="急診醫學國際會議一站整理：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。">
+<meta property="og:description" content="急診醫學國際會議一站整理：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EUSEM、ASEM、台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。">
 <meta property="og:url" content="https://96311123.github.io/EM-conference2/">
 <meta property="og:locale" content="zh_TW">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1326,7 +1340,7 @@ def render_html(rows: list[dict], today: date, generated: str,
   <h1>急診國際年會追蹤</h1>
   <p class="stamp">最後更新 {generated}</p>
 </header>
-<p class="lede">收錄 ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、SEMS、HKCEM、AAEMS
+<p class="intro">收錄 ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EUSEM、ASEM、SEMS、HKCEM、AAEMS
   與台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。</p>
 
 {map_html}
@@ -1350,16 +1364,21 @@ def render_html(rows: list[dict], today: date, generated: str,
 </section>
 
 <footer>
-  <p>每週一自動擷取自各學會官方頁面：</p>
+  <p>每週一自動更新。資料來源：</p>
   <ul>
     <li>ACEP 美國急診醫師學會 — acep.org/sa/general-information/future-dates</li>
     <li>SAEM 美國學術急診醫學會 — saem.org/meetings-and-events/future-meetings</li>
-    <li>IFEM 國際急診醫學聯盟 — ifem.cc/about_congress</li>
-    <li>EuSEM 歐洲急診醫學會 — eusemcongress.org</li>
+    <li>ERC 歐洲復甦委員會 — erc.edu/events/congress</li>
+    <li>ReSS（AHA 美國心臟協會）— professional.heart.org（官網常擋自動擷取，另有人工備援資料）</li>
+    <li>ICEM（IFEM 國際急診醫學聯盟）— ifem.cc/about_congress</li>
+    <li>EUSEM 歐洲急診醫學會 — eusemcongress.org</li>
     <li>ASEM 亞洲急診醫學會 — asiansem.org/events-and-sponsorship</li>
-    <li>SEMS 新加坡急診 — sems-online.com（WordPress API）</li>
-    <li>HKCEM 香港急症科醫學院 — hkcem.org.hk（WordPress API）</li>
+    <li>SEMS 新加坡急診醫學會 — sems-online.com（WordPress API）</li>
+    <li>HKCEM 香港急症科醫學院 — hkcem.org.hk、ssem.hk（WordPress API＋人工確認）</li>
+    <li>AAEMS 亞洲緊急醫療救護協會 — emsasia.org（人工維護）</li>
+    <li>TSEM 台灣急診醫學會 — sem.org.tw（年會依慣例推算，正式日期以學會公告為準）</li>
   </ul>
+  <p>歷屆場次另參考 WikEM、Wikipedia 與各學會歷年公告整理。</p>
   <p>虛線框代表學會只公布了月份、尚未定案確切日期。已從官網下架的場次仍
      保留在<a href="past.html">歷屆場次</a>裡。訂閱
      <a href="conferences.ics">行事曆檔</a>，或下載
@@ -1371,12 +1390,25 @@ def render_html(rows: list[dict], today: date, generated: str,
 </div>
 <script>
 (function(){{
+  // 倒數都用瀏覽器當天日期即時計算；網頁每週一才重新產生，寫死的數字會越來越不準。
+  function daysUntil(iso){{
+    var t = new Date(iso + 'T00:00:00'), n = new Date();
+    n = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    return Math.round((t - n) / 86400000);
+  }}
   var el = document.querySelector('.count[data-start]');
-  if(!el) return;
-  var start = new Date(el.dataset.start + 'T00:00:00');
-  var days = Math.ceil((start - new Date()) / 86400000);
-  el.querySelector('b').textContent = days > 0 ? days : 0;
-  if (days <= 0) el.innerHTML = '<b>進行中</b>';
+  if (el) {{
+    var d = daysUntil(el.dataset.start), e = daysUntil(el.dataset.end || el.dataset.start);
+    if (d > 0) el.innerHTML = '<b>' + d + '</b> 天後開幕';
+    else if (e >= 0) el.innerHTML = '<b>進行中</b>';
+    else el.innerHTML = '<b>已閉幕</b>';
+  }}
+  document.querySelectorAll('[data-deadline]').forEach(function(x){{
+    var d = daysUntil(x.dataset.deadline), li = x.closest('li');
+    if (d < 0) {{ x.innerHTML = '已截止'; if (li) li.className = 'closed'; return; }}
+    x.innerHTML = '<b>' + d + '</b> 天';
+    if (li) li.className = d <= 7 ? 'urgent' : (d <= 30 ? 'soon' : '');
+  }});
 }})();
 {MAP_JS}
 {ZOOM_JS}
@@ -1398,6 +1430,13 @@ SOCIETY_HOME = {"SEMS": (1.35, 103.82), "HKCEM": (22.32, 114.17), "TSEM": (25.03
 
 PIN_R = 4.6          # 圖釘半徑（地圖座標）
 PIN_GAP = 10.2       # 兩顆圖釘中心最少相距
+
+
+def is_online(r: dict) -> bool:
+    """全線上的會議（例如 ICEM 2021、台灣急診醫學會 2021 年會）：不在地圖上標點。"""
+    blob = " ".join(str(r.get(k) or "") for k in ("name", "venue", "note"))
+    return ("線上" in blob or "virtual" in blob.lower()) and "混合" not in blob \
+        and "實體" not in blob and "hybrid" not in blob.lower()
 
 
 def past_coords(r: dict) -> tuple[float, float] | None:
@@ -1476,6 +1515,8 @@ def spread_pins(anchors: list[tuple[float, float]],
 def past_map_section(rows: list[dict]) -> str:
     items = []
     for r in sorted(rows, key=lambda r: (r["_start"] or date.min)):
+        if is_online(r):
+            continue
         c = past_coords(r)
         if c:
             items.append((r, project(*c)))
@@ -1530,9 +1571,11 @@ def past_map_section(rows: list[dict]) -> str:
         f'{html.escape(meeting_code(s))}'
         f'<small>{sum(1 for r, _ in items if r["society"] == s)}</small></span>'
         for s in present)
-    missing = len(rows) - len(items)
-    note = (f"另有 {missing} 場沒有可辨識的地點（例如線上會議），只列在下方清單。"
-            if missing else "")
+    online = sum(1 for r in rows if is_online(r))
+    unknown = len(rows) - len(items) - online
+    parts = ([f"{online} 場線上會議"] if online else []) + \
+            ([f"{unknown} 場地點不詳"] if unknown else [])
+    note = (f"另有{'、'.join(parts)}沒有標在地圖上，只列在下方清單。" if parts else "")
 
     svg = (f'<svg class="m-svg" viewBox="0 0 {MAP_W} {MAP_H:.0f}" role="img" '
            f'aria-label="歷屆會議地圖">'
@@ -1591,9 +1634,9 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>歷屆會議 — 急診國際年會追蹤</title>
-<meta name="description" content="歷屆急診醫學國際會議：ACEP、SAEM、ERC、AHA ReSS、ICEM、EuSEM、ASEM、台灣急診醫學會等，附世界地圖標示舉辦城市。">
+<meta name="description" content="歷屆急診醫學國際會議：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EUSEM、ASEM、台灣急診醫學會等，附世界地圖標示舉辦城市。">
 <meta property="og:title" content="歷屆會議 — 急診國際年會追蹤">
-<meta property="og:description" content="歷屆急診醫學國際會議：ACEP、SAEM、ERC、AHA ReSS、ICEM、EuSEM、ASEM、台灣急診醫學會等，附世界地圖標示舉辦城市。">
+<meta property="og:description" content="歷屆急診醫學國際會議：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EUSEM、ASEM、台灣急診醫學會等，附世界地圖標示舉辦城市。">
 <meta property="og:url" content="https://96311123.github.io/EM-conference2/past.html">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
