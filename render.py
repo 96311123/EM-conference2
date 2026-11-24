@@ -192,23 +192,25 @@ def _month_from_text(text: str) -> int | None:
     return None
 
 
+def is_past(r: dict, today: date) -> bool:
+    """
+    是否已經結束：有結束日期就看日期；沒有日期（日期或地點未定）時，
+    年份早於今年就算已結束。例如只知道「2016 年在開普敦」的 ICEM，
+    或一直沒公布的暫定場次，都歸為過去、卡片顯示為灰色。
+    """
+    if r["_end"]:
+        return r["_end"] < today
+    return bool(r.get("year")) and r["year"] < today.year
+
+
 def split_archive(rows: list[dict], today: date) -> tuple[list[dict], list[dict]]:
     """
     主頁只放還沒結束的場次；已經結束的（包含今年稍早開完的）移到封存頁。
     沒有日期的（例如只公布月份的 IFEM 2027）一律留在主頁——那是未來的事，
     不該被當成歷史。
     """
-    cut = today
-
-    def ended(r: dict) -> bool:
-        if r["_end"]:
-            return r["_end"] < cut
-        # 沒有日期、但年份已經過去的暫定場次（例如一直沒公布的 SEMS ASM），
-        # 不該永遠掛在主頁上。
-        return bool(r.get("year")) and r["year"] < today.year
-
-    current = [r for r in rows if not ended(r)]
-    archive = [r for r in rows if ended(r)]
+    current = [r for r in rows if not is_past(r, today)]
+    archive = [r for r in rows if is_past(r, today)]
     return current, archive
 
 
@@ -560,14 +562,14 @@ def conference_cards(rows: list[dict], today: date) -> str:
     cards = []
     for r in rows:
         hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
-        past = r["_end"] and r["_end"] < today
+        past = is_past(r, today)
         if r["_confirmed"]:
             when = (r["_start"].isoformat() if r["_start"] == r["_end"]
                     else f'{r["_start"].isoformat()} – {r["_end"].isoformat()}')
         else:
             when = html.escape(r.get("date_text") or "日期未定")
         place = ", ".join(x for x in (r.get("city"), r.get("country_or_state")) if x) or "地點未定"
-        tba = "" if r["_confirmed"] else " tba"
+        tba = "" if r["_confirmed"] or past else " tba"     # 已結束的不再標虛線
         tag = ("<span class='done'>暫定</span>" if r.get("tentative")
                else ("<span class='done'>日期未定</span>" if tba else ""))
         cards.append(
@@ -599,7 +601,7 @@ def season_grid(rows: list[dict], today: date) -> str:
         for r in in_year:
             m = r["_month"] or 12
             hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
-            past = " past" if r["_end"] and r["_end"] < today else ""
+            past = " past" if is_past(r, today) else ""
             tba = "" if r["_confirmed"] else " tba"
             when = (f'{r["_start"].month}/{r["_start"].day}–'
                     f'{r["_end"].month}/{r["_end"].day}') if r["_start"] else "日期未定"
