@@ -562,7 +562,8 @@ def conference_cards(rows: list[dict], today: date) -> str:
         hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
         past = r["_end"] and r["_end"] < today
         if r["_confirmed"]:
-            when = f'{r["_start"].isoformat()} – {r["_end"].isoformat()}'
+            when = (r["_start"].isoformat() if r["_start"] == r["_end"]
+                    else f'{r["_start"].isoformat()} – {r["_end"].isoformat()}')
         else:
             when = html.escape(r.get("date_text") or "日期未定")
         place = ", ".join(x for x in (r.get("city"), r.get("country_or_state")) if x) or "地點未定"
@@ -671,7 +672,9 @@ CITY_COORDS = {
     "brisbane": (-27.47, 153.03), "perth": (-31.95, 115.86),
     "auckland": (-36.85, 174.76), "san antonio": (29.42, -98.49),
     "fort lauderdale": (26.12, -80.14), "milan": (45.46, 9.19),
-    "hua hin": (12.57, 99.96), "antalya": (36.90, 30.70),
+    "hua hin": (12.57, 99.96), "new taipei": (25.01, 121.46),
+    "taichung": (24.15, 120.67), "changhua": (24.08, 120.54), "kaohsiung": (22.63, 120.30),
+    "chiayi": (23.48, 120.45), "pingtung": (22.67, 120.49), "tainan": (22.99, 120.21), "antalya": (36.90, 30.70),
     "new delhi": (28.61, 77.21), "busan": (35.18, 129.08),
     "clark freeport, angeles city": (15.19, 120.55), "angeles city": (15.15, 120.59),
     "clark": (15.19, 120.55), "indianapolis": (39.77, -86.16),
@@ -1233,7 +1236,8 @@ def render_html(rows: list[dict], today: date, generated: str,
             '<section class="hero">'
             '<p class="lede">下一場</p>'
             f'<p class="title">{html.escape(display_name(nxt))}</p>'
-            f'<p class="meta">{nxt["_start"].isoformat()} – {nxt["_end"].isoformat()}'
+            f'<p class="meta">{nxt["_start"].isoformat()}'
+            f'{"" if nxt["_start"] == nxt["_end"] else " – " + nxt["_end"].isoformat()}'
             f'{"　·　" + html.escape(place) if place else ""}</p>'
             f'<p class="count" data-start="{nxt["_start"].isoformat()}">'
             f'<b>—</b> 天後開幕</p></section>')
@@ -1341,10 +1345,13 @@ def past_coords(r: dict) -> tuple[float, float] | None:
         # SEMS 只收名稱裡有 SEMS 的，避免把 SEMS 官網轉貼的他會公告算進來。
         if not city and soc == "SEMS" and "sems" not in (r.get("name") or "").lower():
             return None
-        if city in {"", "singapore", "hong kong", "taipei", "taiwan", "taichung"}:
+        if city in {"", "singapore", "hong kong", "taiwan"} | TAIWAN_CITIES:
             return SOCIETY_HOME[soc]
     return coords_for(r)
 
+
+TAIWAN_CITIES = {"taipei", "new taipei", "taichung", "changhua", "kaohsiung", "chiayi",
+                 "pingtung", "tainan", "hsinchu", "taoyuan", "hualien"}
 
 # 這幾個學會的年會固定在自己的城市（台灣、新加坡、香港），圖釘直接疊在
 # 同一點、不錯開；其他學會的圖釘照樣會避開它們。

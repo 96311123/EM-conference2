@@ -167,8 +167,12 @@ def load_history(archive: list[dict]) -> list[dict]:
     except json.JSONDecodeError as exc:
         print(f"[warn] history.json 格式錯誤，已略過：{exc}")
         return []
-    have = {(r.get("society"), r.get("year")) for r in archive}
-    return [r for r in rows if (r.get("society"), r.get("year")) not in have]
+    # 同一學會一年可能有兩場（例如台灣急診醫學會的六月年會與十一月冬季會），
+    # 所以有確切日期時用 (學會, 開始日) 比對；只有年份時才用 (學會, 年份)。
+    def key(r):
+        return (r.get("society"), r.get("start") or r.get("year"))
+    have = {key(r) for r in archive if not r.get("tentative")}
+    return [r for r in rows if key(r) not in have]
 
 
 def tsem_tentative(today: date | None = None) -> list[dict]:
