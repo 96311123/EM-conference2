@@ -1,7 +1,10 @@
 # 急診國際年會自動追蹤
 
-每週自動擷取七個急診醫學會的**年會日期地點**與**摘要投稿死線**，產出一頁
-儀表板、一個帶提醒的行事曆，以及 CSV／JSON。
+每週自動整理急診醫學重要國際會議的**日期地點**與**摘要投稿死線**——ACEP、SAEM、
+ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、SEMS、HKCEM、AAEMS 與台灣急診醫學會——
+產出附世界地圖的儀表板與歷屆會議頁、一個帶提醒的行事曆，以及 CSV／JSON。
+
+網站：https://96311123.github.io/EM-conference2/
 
 | 學會 | 年會 | 來源結構 | 信心 |
 |---|---|---|---|
@@ -12,6 +15,10 @@
 | ASEM | Asian Conference（ACEM，兩年一次） | events 頁列 1–14 屆 | 高 |
 | SEMS | Annual Scientific Meeting | WordPress REST API 篩貼文 | 中 |
 | HKCEM | 學術活動 | WordPress REST API 篩貼文 | 低 |
+| ERC | Congress – Resuscitation | General Information 頁 | 中 |
+| AHA | Resuscitation Science Symposium（ReSS） | 官網常回 403，備援資料 | 低 |
+| AAEMS | EMS Asia Conference | 人工維護（manual.json） | — |
+| TSEM | 年會（六月）／冬季學術討論會 | 年會依慣例自動推算暫定場次；歷屆見 history.json | — |
 
 ## 檔案
 

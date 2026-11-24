@@ -421,6 +421,7 @@ h2{font-size:1.05rem; font-weight:600; margin:0 0 1rem;
 .card .meta svg{flex:0 0 auto; width:.9rem; height:.9rem; margin-top:.22rem}
 .card .meta .place{color:var(--ink)}
 .card.past{opacity:.5}
+.lede{margin:.2rem 0 0; color:var(--muted); font-size:.95rem; line-height:1.6; max-width:52rem}
 .card.tba .band{border-style:dashed; border-color:#9aa9b0}
 .card .done{font-size:.72rem; white-space:nowrap; display:inline-block; border:1px solid var(--rule); padding:0 .3rem;
   margin-left:.4rem; color:var(--muted); font-weight:400}
@@ -1266,7 +1267,13 @@ def render_html(rows: list[dict], today: date, generated: str,
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>急診國際年會追蹤</title>
-<meta name="description" content="ACEP、SAEM、IFEM、EuSEM 四大急診醫學會年會的日期與地點，每月自動更新。">
+<meta name="description" content="急診醫學國際會議一站整理：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="急診國際年會追蹤">
+<meta property="og:title" content="急診國際年會追蹤">
+<meta property="og:description" content="急診醫學國際會議一站整理：ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。">
+<meta property="og:url" content="https://96311123.github.io/EM-conference2/">
+<meta property="og:locale" content="zh_TW">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&display=swap" rel="stylesheet">
@@ -1279,6 +1286,8 @@ def render_html(rows: list[dict], today: date, generated: str,
   <h1>急診國際年會追蹤</h1>
   <p class="stamp">最後更新 {generated}</p>
 </header>
+<p class="lede">收錄 ACEP、SAEM、ERC、AHA ReSS、ICEM（IFEM）、EuSEM、ASEM、SEMS、HKCEM、AAEMS
+  與台灣急診醫學會等重要會議的日期、地點與投稿死線，附世界地圖方便閱讀與查詢，每週自動更新。</p>
 
 {map_html}
 
@@ -1542,6 +1551,10 @@ def render_archive(rows: list[dict], today: date, generated: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>歷屆會議 — 急診國際年會追蹤</title>
+<meta name="description" content="歷屆急診醫學國際會議：ACEP、SAEM、ERC、AHA ReSS、ICEM、EuSEM、ASEM、台灣急診醫學會等，附世界地圖標示舉辦城市。">
+<meta property="og:title" content="歷屆會議 — 急診國際年會追蹤">
+<meta property="og:description" content="歷屆急診醫學國際會議：ACEP、SAEM、ERC、AHA ReSS、ICEM、EuSEM、ASEM、台灣急診醫學會等，附世界地圖標示舉辦城市。">
+<meta property="og:url" content="https://96311123.github.io/EM-conference2/past.html">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
