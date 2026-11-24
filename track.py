@@ -155,6 +155,22 @@ def classify_failures(failed: list[str], health: dict, today: date,
     return regressions, known
 
 
+HISTORY = ROOT / "data" / "history.json"
+
+
+def load_history(archive: list[dict]) -> list[dict]:
+    """歷屆場次（人工整理、不靠爬蟲），只補封存檔沒有的 (學會, 年份)。"""
+    if not HISTORY.exists():
+        return []
+    try:
+        rows = json.loads(HISTORY.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"[warn] history.json 格式錯誤，已略過：{exc}")
+        return []
+    have = {(r.get("society"), r.get("year")) for r in archive}
+    return [r for r in rows if (r.get("society"), r.get("year")) not in have]
+
+
 def tsem_tentative(today: date | None = None) -> list[dict]:
     """
     台灣急診醫學會年會：慣例在六月最後一週的週五、週六舉行，但官網不會
@@ -499,9 +515,12 @@ def main() -> int:
     archive, n_new = update_archive(load_archive(), merged, ok_societies, date.today())
     ARCHIVE.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # 網頁用累積封存而非當次抓取結果，這樣 past.html 只會愈來愈完整
-    write_all(archive, DOCS, today=date.today(), deadlines=deadlines)
-    write_csv(archive, DOCS / "conferences.csv")
+    # 網頁用累積封存而非當次抓取結果，這樣 past.html 只會愈來愈完整。
+    # 再補上人工整理的歷史場次（data/history.json：WikEM、Wikipedia、各學會官網），
+    # 同一 (學會, 年份) 封存檔已有的就以封存檔為準。
+    site_rows = archive + load_history(archive)
+    write_all(site_rows, DOCS, today=date.today(), deadlines=deadlines)
+    write_csv(site_rows, DOCS / "conferences.csv")
 
     emit(f"## 追蹤結果 {date.today().isoformat()}\n")
     emit(f"本次抓到 {len(merged)} 筆場次、{len(deadlines)} 筆死線。"

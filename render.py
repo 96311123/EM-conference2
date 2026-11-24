@@ -674,7 +674,10 @@ CITY_COORDS = {
     "hua hin": (12.57, 99.96), "antalya": (36.90, 30.70),
     "new delhi": (28.61, 77.21), "busan": (35.18, 129.08),
     "clark freeport, angeles city": (15.19, 120.55), "angeles city": (15.15, 120.59),
-    "clark": (15.19, 120.55),
+    "clark": (15.19, 120.55), "indianapolis": (39.77, -86.16),
+    "torino": (45.07, 7.69), "turin": (45.07, 7.69), "ljubljana": (46.06, 14.51),
+    "bologna": (44.49, 11.34), "freiburg im breisgau": (47.99, 7.84),
+    "freiburg": (47.99, 7.84), "antwerp": (51.22, 4.40), "cape town": (-33.92, 18.42),
     "rotterdam": (51.92, 4.48), "edinburgh": (55.95, -3.19), "cape town": (-33.92, 18.42),
     "rio de janeiro": (-22.91, -43.17), "sao paulo": (-23.55, -46.63),
     "são paulo": (-23.55, -46.63), "buenos aires": (-34.60, -58.38),
@@ -763,7 +766,10 @@ def map_when(r: dict) -> str:
             return f"{MON[s.month-1]} {s.day} – {e.day}, {s.year}{tent}"
         return f"{MON[s.month-1]} {s.day} – {MON[e.month-1]} {e.day}, {e.year}{tent}"
     m = r.get("_month")
-    return f"{MON[m-1]} {r.get('year')}（暫定）" if m else f"{r.get('year')}（暫定）"
+    y = r.get("year")
+    # 已經過去、只知道年份的歷史場次（例如 ICEM 2016 開普敦）就只寫年份，不標暫定
+    tent = "（暫定）" if r.get("tentative") or (y and y >= date.today().year) else ""
+    return f"{MON[m-1]} {y}{tent}" if m else f"{y}{tent}"
 
 
 def _text_w(s: str, size: float) -> float:
