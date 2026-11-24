@@ -120,6 +120,18 @@
     "note": ""
   },
   {
+    "society": "IFEM",
+    "cycle": "ICEM / IFEM Global Congress",
+    "track": "Abstracts",
+    "kind": "close",
+    "date_iso": "2026-11-15",
+    "date_text": "15 November 2026",
+    "status": "announced",
+    "confidence": "low",
+    "source_url": "https://ifem2027.com/",
+    "note": "Submissions Open\n25 September 2026\nPortal opens for stall applications\nSubmission Deadline\n15 November 2026\nAll applications must be submitted\nNotification of A"
+  },
+  {
     "society": "SAEM",
     "cycle": "SAEM27",
     "track": "Abstracts",
@@ -154,17 +166,5 @@
     "confidence": "low",
     "source_url": "https://eusemcongress.org/submit-your-abstracts/",
     "note": "擷取失敗：HTTPError: 404 Client Error: Not Found for url: https://eusemcongress.org/submit-your-abstracts/"
-  },
-  {
-    "society": "IFEM",
-    "cycle": "下一屆 IFEM Global Congress",
-    "track": "Abstracts",
-    "kind": "close",
-    "date_iso": "",
-    "date_text": "",
-    "status": "tba",
-    "confidence": "high",
-    "source_url": "https://www.ifem.cc/about_congress",
-    "note": "當期 congress 官網尚未開放投稿；每年約在會期前 8–10 個月公布"
   }
 ]
