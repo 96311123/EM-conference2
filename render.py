@@ -564,15 +564,20 @@ def conference_cards(rows: list[dict], today: date) -> str:
     for r in rows:
         hue = SOCIETY_META.get(r["society"], {}).get("hue", "")
         past = is_past(r, today)
-        if r["_confirmed"]:
+        # 日期一律用同一種寫法：2027-05-18 – 2027-05-21；只知道月份寫 2027-06，
+        # 只知道年份寫 2027。是否確定交給後面的「暫定」標籤，不在日期裡混寫中英文說明。
+        if r["_start"]:
             when = (r["_start"].isoformat() if r["_start"] == r["_end"]
                     else f'{r["_start"].isoformat()} – {r["_end"].isoformat()}')
+        elif r.get("_month") and r.get("year"):
+            when = f'{r["year"]}-{r["_month"]:02d}'
+        elif r.get("year"):
+            when = str(r["year"])
         else:
             when = html.escape(r.get("date_text") or "日期未定")
         place = ", ".join(x for x in (r.get("city"), r.get("country_or_state")) if x) or "地點未定"
         tba = "" if r["_confirmed"] or past else " tba"     # 已結束的不再標虛線
-        tag = ("<span class='done'>暫定</span>" if r.get("tentative")
-               else ("<span class='done'>日期未定</span>" if tba else ""))
+        tag = "<span class='done'>暫定</span>" if tba else ""
         cards.append(
             f'<a class="card{" past" if past else ""}{tba}" '
             f'href="{html.escape(r.get("source_url",""))}">'
