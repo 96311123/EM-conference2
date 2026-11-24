@@ -1223,25 +1223,35 @@ PIN_GAP = 10.2       # 兩顆圖釘中心最少相距
 
 
 def past_coords(r: dict) -> tuple[float, float] | None:
-    c = coords_for(r)
-    if c:
-        return c
     soc = r.get("society", "")
-    if (not r.get("city") and soc in SOCIETY_HOME
-            and soc.lower() in (r.get("name") or "").lower()):
-        return SOCIETY_HOME[soc]
-    return None
+    city = (r.get("city") or "").strip().lower()
+    if soc in SOCIETY_HOME:
+        # 學會自己的年會一律放在學會所在地的同一點（疊在一起）。城市欄空白時，
+        # 只收名稱裡有學會簡稱的，避免把 SEMS 官網轉貼的他會公告算進來。
+        if not city and soc.lower() not in (r.get("name") or "").lower():
+            return None
+        if city in {"", "singapore", "hong kong", "taipei", "taiwan"}:
+            return SOCIETY_HOME[soc]
+    return coords_for(r)
 
 
-def spread_pins(anchors: list[tuple[float, float]]) -> list[tuple[float, float]]:
+# 這幾個學會的年會固定在自己的城市（台灣、新加坡、香港），圖釘直接疊在
+# 同一點、不錯開；其他學會的圖釘照樣會避開它們。
+STACK_SOCIETIES = {"TSEM", "SEMS", "HKCEM"}
+
+
+def spread_pins(anchors: list[tuple[float, float]],
+                fixed: list[bool] | None = None) -> list[tuple[float, float]]:
     """
     把太近的圖釘推開。完全同點的先排成一圈，再反覆做「互相排斥＋輕輕拉回
     原位」，直到任兩顆至少相距 PIN_GAP。回傳每顆圖釘最後的位置。
     """
+    fixed = fixed or [False] * len(anchors)
     pos = [list(a) for a in anchors]
     groups: dict[tuple, list[int]] = {}
     for i, (x, y) in enumerate(anchors):
-        groups.setdefault((round(x, 1), round(y, 1)), []).append(i)
+        if not fixed[i]:
+            groups.setdefault((round(x, 1), round(y, 1)), []).append(i)
     for idx in groups.values():
         if len(idx) > 1:
             rad = PIN_GAP * len(idx) / (2 * math.pi) + 1.5
@@ -1253,17 +1263,26 @@ def spread_pins(anchors: list[tuple[float, float]]) -> list[tuple[float, float]]
         moved = False
         for i in range(len(pos)):
             for j in range(i + 1, len(pos)):
+                if fixed[i] and fixed[j]:
+                    continue                    # 疊放的圖釘彼此不推開
                 dx, dy = pos[j][0] - pos[i][0], pos[j][1] - pos[i][1]
                 d = math.hypot(dx, dy)
                 if d < PIN_GAP:
                     if d < 1e-6:
                         dx, dy, d = 1.0, 0.0, 1.0
-                    push = (PIN_GAP - d) / 2 + 0.05
+                    push = (PIN_GAP - d) + 0.05
                     ux, uy = dx / d, dy / d
-                    pos[i][0] -= ux * push; pos[i][1] -= uy * push
-                    pos[j][0] += ux * push; pos[j][1] += uy * push
+                    if fixed[i]:                # 只推動不固定的那一顆
+                        pos[j][0] += ux * push; pos[j][1] += uy * push
+                    elif fixed[j]:
+                        pos[i][0] -= ux * push; pos[i][1] -= uy * push
+                    else:
+                        pos[i][0] -= ux * push / 2; pos[i][1] -= uy * push / 2
+                        pos[j][0] += ux * push / 2; pos[j][1] += uy * push / 2
                     moved = True
         for i, (ax, ay) in enumerate(anchors):          # 輕輕拉回原位
+            if fixed[i]:
+                continue
             pos[i][0] += (ax - pos[i][0]) * 0.02
             pos[i][1] += (ay - pos[i][1]) * 0.02
         if not moved:
@@ -1279,7 +1298,8 @@ def past_map_section(rows: list[dict]) -> str:
             items.append((r, project(*c)))
     if not items:
         return ""
-    pins = spread_pins([xy for _, xy in items])
+    pins = spread_pins([xy for _, xy in items],
+                       [r["society"] in STACK_SOCIETIES for r, _ in items])
 
     legs, dots, g = [], [], []
     for (r, (ax, ay)), (px, py) in zip(items, pins):
@@ -1307,6 +1327,15 @@ def past_map_section(rows: list[dict]) -> str:
             f'<use href="#mi-pin" x="{bx + 16:.1f}" y="{by + 40.5:.1f}" width="9" height="9"/>'
             f'<text x="{bx + 29:.1f}" y="{by + 48.5:.1f}" class="m-s">{html.escape(place)}</text>'
             f'</g></a>')
+    # 疊放的圖釘：在同一點加一個小數字，顯示疊了幾場
+    stacks: dict[tuple, list] = {}
+    for (r, _), (px, py) in zip(items, pins):
+        if r["society"] in STACK_SOCIETIES:
+            stacks.setdefault((round(px, 1), round(py, 1), r["society"]), []).append(r)
+    badges = "".join(
+        f'<g class="p-stack"><circle cx="{x + 4.6:.1f}" cy="{y - 4.6:.1f}" r="4.4"/>'
+        f'<text x="{x + 4.6:.1f}" y="{y - 2.6:.1f}" text-anchor="middle">{len(v)}</text></g>'
+        for (x, y, _), v in stacks.items() if len(v) > 1)
     anchor_dots = "".join(f'<circle cx="{x}" cy="{y}" r="1.6" class="p-anchor"/>'
                           for x, y in sorted(set(dots)))
 
@@ -1327,7 +1356,7 @@ def past_map_section(rows: list[dict]) -> str:
            f'<feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-opacity=".28"/>'
            f'</filter></defs>'
            f'<path d="{COUNTRIES_PATH}" class="m-land"/>'
-           f'{"".join(legs)}{anchor_dots}<g class="p-pins">{"".join(g)}</g></svg>')
+           f'{"".join(legs)}{anchor_dots}<g class="p-pins">{"".join(g)}</g>{badges}</svg>')
     return (
         '<section class="worldmap pastmap" aria-labelledby="pm-title">'
         '<div class="wm-head">'
@@ -1335,7 +1364,8 @@ def past_map_section(rows: list[dict]) -> str:
         '</div>'
         f'<div class="wm-board">{svg}<div class="p-legend">{legend}</div></div>'
         '<p class="wm-note">每顆圖釘是一場會議，顏色代表學會；同一城市辦過多次時圖釘會稍微錯開，'
-        f'細線連回實際位置。滑鼠移到圖釘上可看名稱、日期與地點。{note}</p>'
+        f'細線連回實際位置。台灣、新加坡、香港的學會年會固定在當地舉辦，圖釘疊在同一點，右上角數字是場數。'
+        f'滑鼠移到圖釘上可看名稱、日期與地點。{note}</p>'
         '</section>')
 
 
@@ -1344,6 +1374,9 @@ PAST_MAP_CSS = """
 .m-item:hover .p-pin,.m-item:focus .p-pin{r:6.4; stroke:#13222a}
 .p-leg{stroke:#efe8dc; stroke-width:.9; opacity:.85}
 .p-anchor{fill:#efe8dc}
+.p-stack{pointer-events:none}
+.p-stack circle{fill:#13222a; stroke:#fff; stroke-width:.8}
+.p-stack text{font-size:6px; font-weight:700; fill:#fff}
 .p-legend{display:flex; flex-wrap:wrap; gap:.35rem .9rem; margin-top:.8rem; padding:.55rem .8rem;
   background:#fbfaf7; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.18); font-size:.82rem; color:#13222a}
 .p-key{display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap}
