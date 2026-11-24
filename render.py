@@ -1327,7 +1327,7 @@ def render_html(rows: list[dict], today: date, generated: str,
 # 再用細線連回真正的位置，避免疊成一顆。
 
 # 城市欄空白時的預設地點：只用在學會自己的年會（名稱裡有學會簡稱）。
-SOCIETY_HOME = {"SEMS": (1.35, 103.82), "HKCEM": (22.32, 114.17), "TSEM": (23.7, 121.0)}
+SOCIETY_HOME = {"SEMS": (1.35, 103.82), "HKCEM": (22.32, 114.17), "TSEM": (25.03, 121.57)}
 
 PIN_R = 4.6          # 圖釘半徑（地圖座標）
 PIN_GAP = 10.2       # 兩顆圖釘中心最少相距
@@ -1338,10 +1338,10 @@ def past_coords(r: dict) -> tuple[float, float] | None:
     city = (r.get("city") or "").strip().lower()
     if soc in SOCIETY_HOME:
         # 學會自己的年會一律放在學會所在地的同一點（疊在一起）。城市欄空白時，
-        # 只收名稱裡有學會簡稱的，避免把 SEMS 官網轉貼的他會公告算進來。
-        if not city and soc.lower() not in (r.get("name") or "").lower():
+        # SEMS 只收名稱裡有 SEMS 的，避免把 SEMS 官網轉貼的他會公告算進來。
+        if not city and soc == "SEMS" and "sems" not in (r.get("name") or "").lower():
             return None
-        if city in {"", "singapore", "hong kong", "taipei", "taiwan"}:
+        if city in {"", "singapore", "hong kong", "taipei", "taiwan", "taichung"}:
             return SOCIETY_HOME[soc]
     return coords_for(r)
 
